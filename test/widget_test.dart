@@ -1,14 +1,28 @@
+
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:domus/main.dart';
 
 void main() {
-  testWidgets('Domus inicia corretamente', (WidgetTester tester) async {
-    await tester.pumpWidget(const DomusApp());
+  testWidgets('Domus apresenta carregamento durante inicialização',
+      (WidgetTester tester) async {
+    final inicializacao = Completer<int>();
 
-    expect(find.text('Domus'), findsOneWidget);
-    expect(find.text('Controle suas contas'), findsOneWidget);
-    expect(find.text('Total do mês'), findsOneWidget);
-    expect(find.text('Próximas contas'), findsOneWidget);
+    await tester.pumpWidget(
+      DomusApp(
+        gerarRecorrencias: () => inicializacao.future,
+      ),
+    );
+
+    final aplicativo = tester.widget<MaterialApp>(
+      find.byType(MaterialApp),
+    );
+
+    expect(aplicativo.title, 'Domus');
+    expect(find.text('Preparando suas contas...'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 }

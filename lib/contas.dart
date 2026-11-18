@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'detalhes_conta.dart';
+
+import 'database/contas_repository.dart';
 import 'adicionar_conta.dart';
+import 'detalhes_conta.dart';
 
 class TelaContas extends StatefulWidget {
   const TelaContas({super.key});
@@ -10,498 +12,543 @@ class TelaContas extends StatefulWidget {
 }
 
 class _TelaContasState extends State<TelaContas> {
-  final List<Map<String, dynamic>> contas = [
-    {
-      'nome': 'Água',
-      'valor': 'R\$ 85,00',
-      'vencimento': '10/10/2026',
-      'status': 'Pendente',
-      'cor': Colors.amber,
-      'recorrencia': 'Mensal',
-    },
-    {
-      'nome': 'Internet',
-      'valor': 'R\$ 99,90',
-      'vencimento': '15/10/2026',
-      'status': 'Paga',
-      'cor': Colors.green,
-      'recorrencia': 'Mensal',
-    },
-    {
-      'nome': 'Energia',
-      'valor': 'R\$ 142,50',
-      'vencimento': '05/10/2026',
-      'status': 'Atrasada',
-      'cor': Colors.red,
-      'recorrencia': 'Mensal',
-    },
-    {
-      'nome': 'Telefone',
-      'valor': 'R\$ 49,90',
-      'vencimento': '20/10/2026',
-      'status': 'Pendente',
-      'cor': Colors.amber,
-      'recorrencia': 'Não se repete',
-    },
-  ];
+  final ContasRepository _repository = ContasRepository();
 
-  String ordemSelecionada = 'Mais recentes';
+  List<Map<String, Object?>> contas = [];
 
-  bool mostrarPendentes = true;
-  bool mostrarAtrasadas = true;
-  bool mostrarPagas = true;
+  bool carregando = true;
+  String? erro;
+  String filtroSelecionado = 'Todas';
 
-  DateTime converterData(String data) {
-    final partes = data.split('/');
+  static const Color azulPrincipal = Color(0xFF2563EB);
+  static const Color fundo = Color(0xFFF5F7FB);
 
-    return DateTime(
-      int.parse(partes[2]),
-      int.parse(partes[1]),
-      int.parse(partes[0]),
-    );
+  @override
+  void initState() {
+    super.initState();
+    carregarContas();
   }
 
-  List<Map<String, dynamic>> get contasFiltradas {
-    final lista = contas.where((conta) {
-      final status = conta['status'];
+  Future<void> carregarContas() async {
+    try {
+      final resultado = await _repository.listar();
 
-      if (status == 'Pendente') {
-        return mostrarPendentes;
-      }
+      if (!mounted) return;
 
-      if (status == 'Atrasada') {
-        return mostrarAtrasadas;
-      }
-
-      if (status == 'Paga') {
-        return mostrarPagas;
-      }
-
-      return false;
-    }).toList();
-
-    lista.sort((a, b) {
-      final dataA = converterData(a['vencimento']);
-      final dataB = converterData(b['vencimento']);
-
-      if (ordemSelecionada == 'Mais antigas') {
-        return dataA.compareTo(dataB);
-      }
-
-      return dataB.compareTo(dataA);
-    });
-
-    return lista;
-  }
-
-  void abrirOrdenacao() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(20),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Ordenar contas',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              RadioListTile<String>(
-                title: const Text('Mais recentes'),
-                value: 'Mais recentes',
-                groupValue: ordemSelecionada,
-                onChanged: (valor) {
-                  if (valor != null) {
-                    setState(() {
-                      ordemSelecionada = valor;
-                    });
-
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-              RadioListTile<String>(
-                title: const Text('Mais antigas'),
-                value: 'Mais antigas',
-                groupValue: ordemSelecionada,
-                onChanged: (valor) {
-                  if (valor != null) {
-                    setState(() {
-                      ordemSelecionada = valor;
-                    });
-
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void abrirFiltro() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            final todas =
-                mostrarPendentes && mostrarAtrasadas && mostrarPagas;
-
-            void atualizarTodas(bool valor) {
-              setModalState(() {
-                mostrarPendentes = valor;
-                mostrarAtrasadas = valor;
-                mostrarPagas = valor;
-              });
-
-              setState(() {});
-            }
-
-            void atualizarStatus(
-              String status,
-              bool valor,
-            ) {
-              setModalState(() {
-                if (status == 'Pendente') {
-                  mostrarPendentes = valor;
-                } else if (status == 'Atrasada') {
-                  mostrarAtrasadas = valor;
-                } else if (status == 'Paga') {
-                  mostrarPagas = valor;
-                }
-              });
-
-              setState(() {});
-            }
-
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Filtrar por status',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    CheckboxListTile(
-                      title: const Text('Todas'),
-                      value: todas,
-                      onChanged: (valor) {
-                        atualizarTodas(valor ?? false);
-                      },
-                    ),
-                    CheckboxListTile(
-                      title: const Text('Pendentes'),
-                      value: mostrarPendentes,
-                      onChanged: (valor) {
-                        atualizarStatus(
-                          'Pendente',
-                          valor ?? false,
-                        );
-                      },
-                    ),
-                    CheckboxListTile(
-                      title: const Text('Atrasadas'),
-                      value: mostrarAtrasadas,
-                      onChanged: (valor) {
-                        atualizarStatus(
-                          'Atrasada',
-                          valor ?? false,
-                        );
-                      },
-                    ),
-                    CheckboxListTile(
-                      title: const Text('Pagas'),
-                      value: mostrarPagas,
-                      onChanged: (valor) {
-                        atualizarStatus(
-                          'Paga',
-                          valor ?? false,
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: const Text(
-                            'Aplicar filtros',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> abrirDetalhes(
-    Map<String, dynamic> conta,
-  ) async {
-    final resultado = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => TelaDetalhesConta(
-          nome: conta['nome'],
-          valor: conta['valor'],
-          vencimento: conta['vencimento'],
-          status: conta['status'],
-          recorrencia: conta['recorrencia'],
-        ),
-      ),
-    );
-
-    if (resultado == 'paga') {
       setState(() {
-        conta['status'] = 'Paga';
-        conta['cor'] = Colors.green;
+        contas = resultado;
+        carregando = false;
+        erro = null;
       });
-    } else if (resultado == 'excluir') {
-      setState(() {
-        contas.remove(conta);
-      });
-    } else if (resultado is Map<String, dynamic>) {
-      setState(() {
-        final index = contas.indexOf(conta);
+    } catch (e) {
+      if (!mounted) return;
 
-        if (index != -1) {
-          contas[index] = resultado;
-        }
+      setState(() {
+        carregando = false;
+        erro = 'Não foi possível carregar as contas: $e';
       });
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final lista = contasFiltradas;
+  String formatarMoeda(Object? valor) {
+    final centavos = (valor as num?)?.toInt() ?? 0;
+    final reais = (centavos / 100).toStringAsFixed(2);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Minhas contas',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        elevation: 2,
-        shadowColor: Colors.black26,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Contas do mês',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: abrirOrdenacao,
-                    icon: const Icon(Icons.sort),
-                    label: const Text('Ordenar'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: abrirFiltro,
-                    icon: const Icon(Icons.filter_list),
-                    label: const Text('Filtrar'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            if (lista.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Column(
-                  children: [
-                    Icon(
-                      Icons.receipt_long,
-                      size: 48,
-                      color: Colors.black38,
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      'Nenhuma conta encontrada.',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ...lista.map(
-              (conta) => _Conta(
-                nome: conta['nome'],
-                valor: conta['valor'],
-                vencimento: conta['vencimento'],
-                status: conta['status'],
-                cor: conta['cor'],
-                onTap: () => abrirDetalhes(conta),
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final novaConta = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const TelaAdicionarConta(),
-            ),
-          );
+    return 'R\$ ${reais.replaceAll('.', ',')}';
+  }
 
-          if (novaConta != null) {
-            setState(() {
-              contas.add(novaConta);
-            });
-          }
+  String formatarData(String data) {
+    final partes = data.split('-');
+
+    if (partes.length != 3) return data;
+
+    return '${partes[2]}/${partes[1]}/${partes[0]}';
+  }
+
+  String nomeStatus(String? status) {
+    switch (status) {
+      case 'paga':
+        return 'Paga';
+      case 'atrasada':
+        return 'Atrasada';
+      case 'parcial':
+        return 'Parcial';
+      default:
+        return 'Pendente';
+    }
+  }
+
+  Color corStatus(String? status) {
+    switch (status) {
+      case 'paga':
+        return const Color(0xFF16A34A);
+      case 'atrasada':
+        return const Color(0xFFDC2626);
+      case 'parcial':
+        return const Color(0xFFD97706);
+      default:
+        return azulPrincipal;
+    }
+  }
+
+  Color fundoStatus(String? status) {
+    switch (status) {
+      case 'paga':
+        return const Color(0xFFDCFCE7);
+      case 'atrasada':
+        return const Color(0xFFFEE2E2);
+      case 'parcial':
+        return const Color(0xFFFEF3C7);
+      default:
+        return const Color(0xFFDBEAFE);
+    }
+  }
+
+  IconData iconeCategoria(String categoria) {
+    final nome = categoria.toLowerCase();
+
+    if (nome.contains('água') || nome.contains('agua')) {
+      return Icons.water_drop_outlined;
+    }
+    if (nome.contains('energia') || nome.contains('luz')) {
+      return Icons.bolt_outlined;
+    }
+    if (nome.contains('internet')) {
+      return Icons.wifi_outlined;
+    }
+    if (nome.contains('telefone') || nome.contains('celular')) {
+      return Icons.phone_android_outlined;
+    }
+    if (nome.contains('gás') || nome.contains('gas')) {
+      return Icons.local_fire_department_outlined;
+    }
+    if (nome.contains('moradia') || nome.contains('aluguel')) {
+      return Icons.home_outlined;
+    }
+
+    return Icons.receipt_long_outlined;
+  }
+
+  List<Map<String, Object?>> get contasFiltradas {
+    if (filtroSelecionado == 'Todas') {
+      return contas;
+    }
+
+    final statusFiltro = {
+      'Pendentes': 'pendente',
+      'Atrasadas': 'atrasada',
+      'Parciais': 'parcial',
+      'Pagas': 'paga',
+    }[filtroSelecionado];
+
+    return contas.where((conta) {
+      return conta['status'] == statusFiltro;
+    }).toList();
+  }
+
+  Future<void> abrirDetalhes(Map<String, Object?> conta) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TelaDetalhesConta(
+          contaId: conta['id'] as int,
+          nome: conta['nome'] as String,
+          valor: formatarMoeda(conta['valor_total_centavos']),
+          vencimento: formatarData(conta['data_vencimento'] as String),
+          status: nomeStatus(conta['status'] as String?),
+          recorrencia: conta['recorrencia_id'] == null
+              ? 'Não se repete'
+              : 'Recorrente',
+        ),
+      ),
+    );
+
+    await carregarContas();
+  }
+
+  Future<void> abrirCadastro() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const TelaAdicionarConta()),
+    );
+
+    await carregarContas();
+  }
+
+  Widget construirFiltro(String nome) {
+    final selecionado = filtroSelecionado == nome;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(nome),
+        selected: selecionado,
+        showCheckmark: false,
+        onSelected: (_) {
+          setState(() {
+            filtroSelecionado = nome;
+          });
         },
-        child: const Icon(Icons.add),
+        backgroundColor: Colors.white,
+        selectedColor: azulPrincipal,
+        side: BorderSide(
+          color: selecionado ? azulPrincipal : const Color(0xFFE2E8F0),
+        ),
+        labelStyle: TextStyle(
+          color: selecionado ? Colors.white : const Color(0xFF475569),
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
     );
   }
-}
 
-class _Conta extends StatelessWidget {
-  final String nome;
-  final String valor;
-  final String vencimento;
-  final String status;
-  final Color cor;
-  final VoidCallback onTap;
-
-  const _Conta({
-    required this.nome,
-    required this.valor,
-    required this.vencimento,
-    required this.status,
-    required this.cor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: cor.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: cor.withValues(alpha: 0.12),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
-            ),
-          ],
+  Widget construirStatus(String? status) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: fundoStatus(status),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        nomeStatus(status),
+        style: TextStyle(
+          color: corStatus(status),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
+      ),
+    );
+  }
+
+  Widget construirIndicadorRecorrente() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFBFDBFE)),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.repeat, size: 13, color: Color(0xFF2563EB)),
+          SizedBox(width: 4),
+          Text(
+            'Recorrente',
+            style: TextStyle(
+              color: Color(0xFF2563EB),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget construirConta(Map<String, Object?> conta) {
+    final status = conta['status'] as String?;
+    final categoria = conta['categoria_nome'] as String? ?? 'Outros';
+    final vencimento = conta['data_vencimento'] as String;
+    final descricao = (conta['descricao'] as String?)?.trim() ?? '';
+
+    final recorrente = conta['recorrencia_id'] != null;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: Colors.white,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: status == 'atrasada'
+              ? const Color(0xFFFECACA)
+              : const Color(0xFFE8EDF4),
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => abrirDetalhes(conta),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    nome,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: Icon(
+                      iconeCategoria(categoria),
+                      color: azulPrincipal,
+                      size: 23,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          conta['nome'] as String? ?? 'Conta',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              categoria,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                            if (recorrente) construirIndicadorRecorrente(),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  construirStatus(status),
+                ],
+              ),
+              if (descricao.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Text(
+                  descricao,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.calendar_today_outlined,
+                    size: 15,
+                    color: Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Vencimento: ${formatarData(vencimento)}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
                   Text(
-                    valor,
+                    formatarMoeda(conta['valor_total_centavos']),
                     style: const TextStyle(
                       fontSize: 16,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Vencimento: $vencimento',
-                    style: const TextStyle(
-                      color: Colors.black54,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1E293B),
                     ),
                   ),
                 ],
               ),
-            ),
-            Text(
-              status,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: cor == Colors.amber
-                    ? Colors.orange.shade800
-                    : cor == Colors.green
-                        ? Colors.green.shade700
-                        : Colors.red.shade700,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget construirConteudoVazio() {
+    final mensagem = filtroSelecionado == 'Todas'
+        ? 'Você ainda não possui contas cadastradas.'
+        : 'Nenhuma conta encontrada neste filtro.';
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 76,
+              height: 76,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: const Icon(
+                Icons.receipt_long_outlined,
+                size: 36,
+                color: azulPrincipal,
               ),
             ),
-            const SizedBox(width: 8),
-            const Icon(
-              Icons.chevron_right,
-              color: Colors.black45,
+            const SizedBox(height: 18),
+            const Text(
+              'Tudo organizado por aqui?',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              mensagem,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: fundo,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          'Minhas Contas',
+          style: TextStyle(
+            color: Color(0xFF1E293B),
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+          ),
+        ),
+        actions: [
+          IconButton(
+            onPressed: carregarContas,
+            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF475569)),
+            tooltip: 'Atualizar',
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: carregando
+          ? const Center(child: CircularProgressIndicator(color: azulPrincipal))
+          : erro != null
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 44,
+                      color: Color(0xFFDC2626),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(erro!, textAlign: TextAlign.center),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: carregarContas,
+                      child: const Text('Tentar novamente'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Organize suas despesas',
+                        style: TextStyle(
+                          fontSize: 21,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        '${contas.length} ${contas.length == 1 ? 'conta cadastrada' : 'contas cadastradas'}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+                  child: Row(
+                    children: [
+                      construirFiltro('Todas'),
+                      construirFiltro('Pendentes'),
+                      construirFiltro('Atrasadas'),
+                      construirFiltro('Parciais'),
+                      construirFiltro('Pagas'),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: contasFiltradas.isEmpty
+                      ? RefreshIndicator(
+                          color: azulPrincipal,
+                          onRefresh: carregarContas,
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              SizedBox(
+                                height: 350,
+                                child: construirConteudoVazio(),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          color: azulPrincipal,
+                          onRefresh: carregarContas,
+                          child: ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                            itemCount: contasFiltradas.length,
+                            itemBuilder: (context, index) {
+                              return construirConta(contasFiltradas[index]);
+                            },
+                          ),
+                        ),
+                ),
+              ],
+            ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: abrirCadastro,
+        backgroundColor: azulPrincipal,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        icon: const Icon(Icons.add),
+        label: const Text(
+          'Nova conta',
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
     );
