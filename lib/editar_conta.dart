@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import 'database/contas_repository.dart';
@@ -23,7 +24,6 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
 
   DateTime? _vencimento;
   int? _categoriaId;
-
   int _valorPagoCentavos = 0;
 
   List<Map<String, Object?>> _categorias = [];
@@ -32,9 +32,7 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
   bool _salvando = false;
   String? _erro;
 
-  static const Color _azul = Color(0xFF2563EB);
-  static const Color _fundo = Color(0xFFF5F7FB);
-  static const Color _texto = Color(0xFF172033);
+  ColorScheme get _cores => Theme.of(context).colorScheme;
 
   @override
   void initState() {
@@ -80,7 +78,8 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
         _valorController.text = _formatarValor(
           (resultado['valor_total_centavos'] as num).toInt(),
         );
-        _descricaoController.text = resultado['descricao'] as String? ?? '';
+        _descricaoController.text =
+            resultado['descricao'] as String? ?? '';
 
         _categoriaId = resultado['categoria_id'] as int;
 
@@ -185,7 +184,9 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
 
     if (_vencimento == null || _categoriaId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Preencha todos os campos obrigatórios.')),
+        const SnackBar(
+          content: Text('Preencha todos os campos obrigatórios.'),
+        ),
       );
       return;
     }
@@ -224,9 +225,9 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Não foi possível atualizar: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Não foi possível atualizar: $e')),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -249,27 +250,29 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
       helperText: helperText,
       helperMaxLines: 2,
       filled: true,
-      fillColor: const Color(0xFFF8FAFC),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 16),
+      fillColor: _cores.surfaceContainerHighest.withValues(alpha: 0.35),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 15,
+        vertical: 16,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: BorderSide(color: _cores.outlineVariant),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(color: _azul, width: 1.5),
+        borderSide: BorderSide(color: _cores.primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(color: Color(0xFFDC2626)),
+        borderSide: BorderSide(color: _cores.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+        borderSide: BorderSide(color: _cores.error, width: 1.5),
       ),
     );
   }
@@ -284,9 +287,9 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cores.surfaceContainerLow,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EDF4)),
+        border: Border.all(color: _cores.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -296,10 +299,14 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: _cores.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icone, color: _azul, size: 21),
+                child: Icon(
+                  icone,
+                  color: _cores.onPrimaryContainer,
+                  size: 21,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -308,8 +315,8 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
                   children: [
                     Text(
                       titulo,
-                      style: const TextStyle(
-                        color: _texto,
+                      style: TextStyle(
+                        color: _cores.onSurface,
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
@@ -318,7 +325,7 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
                     Text(
                       subtitulo,
                       style: TextStyle(
-                        color: Colors.grey.shade600,
+                        color: _cores.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -338,10 +345,10 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Data de vencimento',
           style: TextStyle(
-            color: Color(0xFF334155),
+            color: _cores.onSurfaceVariant,
             fontSize: 13,
             fontWeight: FontWeight.w600,
           ),
@@ -352,31 +359,37 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
           borderRadius: BorderRadius.circular(13),
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 16),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 15,
+              vertical: 16,
+            ),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: _cores.surfaceContainerHighest.withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(13),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: _cores.outlineVariant),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.calendar_month_outlined,
-                  color: _azul,
+                  color: _cores.primary,
                   size: 21,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     _formatarDataExibicao(_vencimento),
-                    style: const TextStyle(
-                      color: _texto,
+                    style: TextStyle(
+                      color: _cores.onSurface,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: Color(0xFF94A3B8)),
+                Icon(
+                  Icons.chevron_right,
+                  color: _cores.onSurfaceVariant,
+                ),
               ],
             ),
           ),
@@ -392,22 +405,28 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
+        color: _cores.primaryContainer,
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: const Color(0xFFBFDBFE)),
+        border: Border.all(
+          color: _cores.primary.withValues(alpha: 0.3),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline, color: _azul, size: 20),
+          Icon(
+            Icons.info_outline,
+            color: _cores.onPrimaryContainer,
+            size: 20,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Esta conta já possui ${_formatarValor(_valorPagoCentavos)} '
               'em pagamentos. O valor total não pode ser menor que '
               'essa quantia.',
-              style: const TextStyle(
-                color: Color(0xFF1E40AF),
+              style: TextStyle(
+                color: _cores.onPrimaryContainer,
                 fontSize: 12,
                 height: 1.5,
               ),
@@ -420,12 +439,11 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
 
   Widget _construirTelaErro() {
     return Scaffold(
-      backgroundColor: _fundo,
+      backgroundColor: _cores.surface,
       appBar: AppBar(
         title: const Text('Editar conta'),
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        foregroundColor: _texto,
+        backgroundColor: _cores.surface,
+        foregroundColor: _cores.onSurface,
         elevation: 0,
       ),
       body: Center(
@@ -434,26 +452,29 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.error_outline,
-                color: Color(0xFFDC2626),
+                color: _cores.error,
                 size: 48,
               ),
               const SizedBox(height: 14),
-              const Text(
+              Text(
                 'Não foi possível carregar a conta.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
-                  color: _texto,
+                  color: _cores.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 _erro ?? 'Ocorreu um erro inesperado.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                style: TextStyle(
+                  color: _cores.onSurfaceVariant,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 20),
               OutlinedButton(
@@ -471,15 +492,16 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
   Widget build(BuildContext context) {
     if (_carregando) {
       return Scaffold(
-        backgroundColor: _fundo,
+        backgroundColor: _cores.surface,
         appBar: AppBar(
           title: const Text('Editar conta'),
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
-          foregroundColor: _texto,
+          backgroundColor: _cores.surface,
+          foregroundColor: _cores.onSurface,
           elevation: 0,
         ),
-        body: const Center(child: CircularProgressIndicator(color: _azul)),
+        body: Center(
+          child: CircularProgressIndicator(color: _cores.primary),
+        ),
       );
     }
 
@@ -488,19 +510,17 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
     }
 
     return Scaffold(
-      backgroundColor: _fundo,
+      backgroundColor: _cores.surface,
       appBar: AppBar(
         title: const Text(
           'Editar conta',
           style: TextStyle(
-            color: _texto,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
         ),
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        foregroundColor: _texto,
+        backgroundColor: _cores.surface,
+        foregroundColor: _cores.onSurface,
         elevation: 0,
       ),
       body: Form(
@@ -508,21 +528,23 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 30),
           children: [
-            const Text(
+            Text(
               'Atualize sua conta',
               style: TextStyle(
                 fontSize: 23,
                 fontWeight: FontWeight.bold,
-                color: _texto,
+                color: _cores.onSurface,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               'Altere as informações necessárias e salve as mudanças.',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+              style: TextStyle(
+                color: _cores.onSurfaceVariant,
+                fontSize: 13,
+              ),
             ),
             const SizedBox(height: 22),
-
             _construirSecao(
               icone: Icons.receipt_long_outlined,
               titulo: 'Informações da conta',
@@ -533,9 +555,9 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
                   textCapitalization: TextCapitalization.sentences,
                   decoration: _decoracaoCampo(
                     label: 'Nome da conta',
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       Icons.edit_outlined,
-                      color: Color(0xFF64748B),
+                      color: _cores.onSurfaceVariant,
                     ),
                   ),
                   validator: (value) {
@@ -551,9 +573,9 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
                   isExpanded: true,
                   decoration: _decoracaoCampo(
                     label: 'Categoria',
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       Icons.category_outlined,
-                      color: Color(0xFF64748B),
+                      color: _cores.onSurfaceVariant,
                     ),
                   ),
                   items: _categorias.map((categoria) {
@@ -570,9 +592,7 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
                 ),
               ],
             ),
-
             const SizedBox(height: 16),
-
             _construirSecao(
               icone: Icons.payments_outlined,
               titulo: 'Valor e vencimento',
@@ -588,9 +608,9 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
                     prefixText: 'R\$ ',
                     helperText:
                         'O valor não pode ser inferior ao total já pago.',
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       Icons.attach_money,
-                      color: Color(0xFF64748B),
+                      color: _cores.onSurfaceVariant,
                     ),
                   ),
                   validator: _validarValor,
@@ -601,9 +621,7 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
                 _construirCampoData(),
               ],
             ),
-
             const SizedBox(height: 16),
-
             _construirSecao(
               icone: Icons.notes_outlined,
               titulo: 'Descrição',
@@ -615,36 +633,37 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
                   maxLines: 4,
                   decoration: _decoracaoCampo(
                     label: 'Descrição (opcional)',
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       Icons.description_outlined,
-                      color: Color(0xFF64748B),
+                      color: _cores.onSurfaceVariant,
                     ),
                   ).copyWith(alignLabelWithHint: true),
                 ),
               ],
             ),
-
             const SizedBox(height: 24),
-
             SizedBox(
               height: 54,
               child: ElevatedButton(
                 onPressed: _salvando ? null : _salvar,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _azul,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: const Color(0xFF93C5FD),
+                  backgroundColor: _cores.primary,
+                  foregroundColor: _cores.onPrimary,
+                  disabledBackgroundColor:
+                      _cores.onSurface.withValues(alpha: 0.12),
+                  disabledForegroundColor:
+                      _cores.onSurface.withValues(alpha: 0.38),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
                 ),
                 child: _salvando
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 22,
                         width: 22,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: _cores.onPrimary,
                           strokeWidth: 2.5,
                         ),
                       )

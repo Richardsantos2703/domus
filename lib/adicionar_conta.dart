@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import 'database/database_helper.dart';
@@ -17,7 +18,6 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
   final _descricaoController = TextEditingController();
 
   static const Color azulPrincipal = Color(0xFF2563EB);
-  static const Color fundo = Color(0xFFF5F7FB);
 
   DateTime? _vencimento;
   int? _categoriaId;
@@ -26,6 +26,10 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
   bool _salvando = false;
 
   List<Map<String, Object?>> _categorias = [];
+
+  Color get corTexto => Theme.of(context).colorScheme.onSurface;
+  Color get corTextoSecundario =>
+      Theme.of(context).colorScheme.onSurfaceVariant;
 
   @override
   void initState() {
@@ -112,7 +116,9 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
       final separador = temPonto ? '.' : ',';
       final partes = limpo.split(separador);
 
-      if (partes.length == 2 && partes[1].isNotEmpty && partes[1].length <= 2) {
+      if (partes.length == 2 &&
+          partes[1].isNotEmpty &&
+          partes[1].length <= 2) {
         limpo = '${partes[0]}.${partes[1]}';
       } else {
         limpo = limpo.replaceAll(separador, '');
@@ -156,9 +162,9 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
     }
 
     if (_categoriaId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Selecione uma categoria.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecione uma categoria.')),
+      );
 
       return;
     }
@@ -194,7 +200,9 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
             'categoria_id': _categoriaId,
             'frequencia': frequencia,
             'dia_vencimento': _vencimento!.day,
-            'mes_vencimento': frequencia == 'anual' ? _vencimento!.month : null,
+            'mes_vencimento': frequencia == 'anual'
+                ? _vencimento!.month
+                : null,
             'descricao': descricao.isEmpty ? null : descricao,
             'ativa': 1,
             'criada_em': DateTime.now().toIso8601String(),
@@ -236,33 +244,38 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
     String? prefixText,
     IconData? icone,
   }) {
+    final cores = Theme.of(context).colorScheme;
+
     return InputDecoration(
       labelText: label,
       hintText: hint,
       prefixText: prefixText,
       prefixIcon: icone == null ? null : Icon(icone),
       filled: true,
-      fillColor: const Color(0xFFF8FAFC),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 17),
+      fillColor: cores.surfaceContainerHighest.withValues(alpha: 0.45),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 17,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: BorderSide(color: cores.outlineVariant),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: BorderSide(color: cores.outlineVariant),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: azulPrincipal, width: 1.5),
+        borderSide: BorderSide(color: cores.primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFDC2626)),
+        borderSide: BorderSide(color: cores.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+        borderSide: BorderSide(color: cores.error, width: 1.5),
       ),
     );
   }
@@ -273,12 +286,14 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
     required IconData icone,
     required List<Widget> campos,
   }) {
+    final cores = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cores.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE8EDF4)),
+        border: Border.all(color: cores.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,10 +304,14 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: cores.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icone, color: azulPrincipal, size: 21),
+                child: Icon(
+                  icone,
+                  color: cores.onPrimaryContainer,
+                  size: 21,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -301,18 +320,18 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
                   children: [
                     Text(
                       titulo,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1E293B),
+                        color: corTexto,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       subtitulo,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF64748B),
+                        color: corTextoSecundario,
                       ),
                     ),
                   ],
@@ -329,44 +348,45 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: fundo,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
         elevation: 0,
         title: const Text(
           'Adicionar conta',
           style: TextStyle(
-            color: Color(0xFF1E293B),
             fontSize: 20,
             fontWeight: FontWeight.w700,
           ),
         ),
-        iconTheme: const IconThemeData(color: Color(0xFF475569)),
       ),
       body: _categorias.isEmpty
-          ? const Center(child: CircularProgressIndicator(color: azulPrincipal))
+          ? const Center(
+              child: CircularProgressIndicator(color: azulPrincipal),
+            )
           : Form(
               key: _formKey,
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
                 children: [
-                  const Text(
+                  Text(
                     'Nova conta',
                     style: TextStyle(
                       fontSize: 23,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF1E293B),
+                      color: corTexto,
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'Preencha os dados para organizar uma nova despesa.',
-                    style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: corTextoSecundario,
+                    ),
                   ),
                   const SizedBox(height: 22),
-
                   _construirSecao(
                     titulo: 'Informações da conta',
                     subtitulo: 'Identificação e valor da despesa',
@@ -438,9 +458,7 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 16),
-
                   _construirSecao(
                     titulo: 'Datas e recorrência',
                     subtitulo: 'Defina quando a conta vence',
@@ -455,19 +473,21 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
                             vertical: 16,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
+                            color: cores.surfaceContainerHighest.withValues(
+                              alpha: 0.45,
+                            ),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: _vencimento == null
-                                  ? const Color(0xFFE2E8F0)
-                                  : const Color(0xFFBFDBFE),
+                                  ? cores.outlineVariant
+                                  : cores.primary.withValues(alpha: 0.5),
                             ),
                           ),
                           child: Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.calendar_today_outlined,
-                                color: azulPrincipal,
+                                color: cores.primary,
                                 size: 21,
                               ),
                               const SizedBox(width: 12),
@@ -475,11 +495,11 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
+                                    Text(
                                       'Data de vencimento',
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: Color(0xFF64748B),
+                                        color: corTextoSecundario,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -489,16 +509,16 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
                                         color: _vencimento == null
-                                            ? const Color(0xFF94A3B8)
-                                            : const Color(0xFF1E293B),
+                                            ? corTextoSecundario
+                                            : corTexto,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              const Icon(
+                              Icon(
                                 Icons.chevron_right,
-                                color: Color(0xFF64748B),
+                                color: corTextoSecundario,
                               ),
                             ],
                           ),
@@ -539,24 +559,24 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
+                            color: cores.primaryContainer,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Row(
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Icon(
                                 Icons.info_outline,
-                                color: azulPrincipal,
+                                color: cores.onPrimaryContainer,
                                 size: 18,
                               ),
-                              SizedBox(width: 8),
+                              const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   'Uma nova conta será gerada automaticamente conforme a recorrência configurada.',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Color(0xFF1E40AF),
+                                    color: cores.onPrimaryContainer,
                                   ),
                                 ),
                               ),
@@ -566,9 +586,7 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
                       ],
                     ],
                   ),
-
                   const SizedBox(height: 16),
-
                   _construirSecao(
                     titulo: 'Descrição',
                     subtitulo: 'Informações adicionais (opcional)',
@@ -586,17 +604,15 @@ class _TelaAdicionarContaState extends State<TelaAdicionarConta> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 24),
-
                   SizedBox(
                     height: 54,
                     child: ElevatedButton(
                       onPressed: _salvando ? null : _salvar,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: azulPrincipal,
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor: azulPrincipal.withValues(
+                        backgroundColor: cores.primary,
+                        foregroundColor: cores.onPrimary,
+                        disabledBackgroundColor: cores.primary.withValues(
                           alpha: 0.5,
                         ),
                         elevation: 2,

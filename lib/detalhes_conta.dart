@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import 'database/contas_repository.dart';
@@ -38,9 +39,10 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
   String? erro;
 
   static const Color azul = Color(0xFF2563EB);
-  static const Color fundo = Color(0xFFF5F7FB);
-  static const Color textoPrincipal = Color(0xFF1E293B);
-  static const Color textoSecundario = Color(0xFF64748B);
+
+  Color get corTexto => Theme.of(context).colorScheme.onSurface;
+  Color get corTextoSecundario =>
+      Theme.of(context).colorScheme.onSurfaceVariant;
 
   @override
   void initState() {
@@ -102,6 +104,8 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
   }
 
   Future<void> _excluirConta() async {
+    final cores = Theme.of(context).colorScheme;
+
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
@@ -118,7 +122,7 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
               child: const Text('Cancelar'),
             ),
             TextButton(
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: cores.error),
               onPressed: () => Navigator.pop(dialogContext, true),
               child: const Text('Excluir'),
             ),
@@ -166,8 +170,9 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Erro ao excluir a conta: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao excluir a conta: $e')),
+      );
     }
   }
 
@@ -202,29 +207,22 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
   }
 
   Color corStatus(String? status) {
+    final escuro = Theme.of(context).brightness == Brightness.dark;
+
     switch (status) {
       case 'paga':
-        return const Color(0xFF16A34A);
+        return escuro ? const Color(0xFF4ADE80) : const Color(0xFF16A34A);
       case 'atrasada':
-        return const Color(0xFFDC2626);
+        return escuro ? const Color(0xFFF87171) : const Color(0xFFDC2626);
       case 'parcial':
-        return const Color(0xFFD97706);
+        return escuro ? const Color(0xFFFBBF24) : const Color(0xFFD97706);
       default:
-        return azul;
+        return escuro ? const Color(0xFF60A5FA) : azul;
     }
   }
 
   Color fundoStatus(String? status) {
-    switch (status) {
-      case 'paga':
-        return const Color(0xFFDCFCE7);
-      case 'atrasada':
-        return const Color(0xFFFEE2E2);
-      case 'parcial':
-        return const Color(0xFFFEF3C7);
-      default:
-        return const Color(0xFFDBEAFE);
-    }
+    return corStatus(status).withValues(alpha: 0.14);
   }
 
   int converterParaCentavos(String valor) {
@@ -345,13 +343,15 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Não foi possível registrar: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Não foi possível registrar: $e')),
+      );
     }
   }
 
   Future<void> excluirPagamento(int pagamentoId) async {
+    final cores = Theme.of(context).colorScheme;
+
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
@@ -364,7 +364,7 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
               child: const Text('Cancelar'),
             ),
             TextButton(
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: cores.error),
               onPressed: () => Navigator.pop(dialogContext, true),
               child: const Text('Excluir'),
             ),
@@ -382,34 +382,37 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Pagamento excluído.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pagamento excluído.')),
+      );
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Erro ao excluir pagamento: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao excluir pagamento: $e')),
+      );
     }
   }
 
   Widget construirIndicadorRecorrente() {
+    final cores = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F0FE),
-        border: Border.all(color: const Color(0xFFD7E3F8)),
+        color: cores.primaryContainer,
+        border: Border.all(color: cores.outlineVariant),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.repeat_rounded, color: azul, size: 14),
-          SizedBox(width: 5),
+          Icon(Icons.repeat_rounded, color: cores.onPrimaryContainer, size: 14),
+          const SizedBox(width: 5),
           Text(
             'Recorrente',
             style: TextStyle(
-              color: azul,
+              color: cores.onPrimaryContainer,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -588,8 +591,8 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
         children: [
           Text(
             titulo,
-            style: const TextStyle(
-              color: textoPrincipal,
+            style: TextStyle(
+              color: corTexto,
               fontSize: 17,
               fontWeight: FontWeight.bold,
             ),
@@ -597,7 +600,7 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
           const SizedBox(height: 3),
           Text(
             subtitulo,
-            style: const TextStyle(color: textoSecundario, fontSize: 12),
+            style: TextStyle(color: corTextoSecundario, fontSize: 12),
           ),
         ],
       ),
@@ -609,6 +612,8 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
     required String titulo,
     required String valor,
   }) {
+    final cores = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 11),
       child: Row(
@@ -617,10 +622,14 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF4FF),
+              color: cores.primaryContainer,
               borderRadius: BorderRadius.circular(11),
             ),
-            child: Icon(icone, color: azul, size: 19),
+            child: Icon(
+              icone,
+              color: cores.onPrimaryContainer,
+              size: 19,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -629,13 +638,13 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
               children: [
                 Text(
                   titulo,
-                  style: const TextStyle(color: textoSecundario, fontSize: 12),
+                  style: TextStyle(color: corTextoSecundario, fontSize: 12),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   valor,
-                  style: const TextStyle(
-                    color: textoPrincipal,
+                  style: TextStyle(
+                    color: corTexto,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -649,6 +658,8 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
   }
 
   Widget construirHistorico() {
+    final cores = Theme.of(context).colorScheme;
+
     if (pagamentos.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 24),
@@ -658,30 +669,30 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
               Container(
                 width: 52,
                 height: 52,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF1F5F9),
+                decoration: BoxDecoration(
+                  color: cores.surfaceContainerHighest,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.receipt_long_outlined,
-                  color: textoSecundario,
+                  color: cores.onSurfaceVariant,
                   size: 25,
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Nenhum pagamento registrado',
                 style: TextStyle(
-                  color: textoPrincipal,
+                  color: corTexto,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Os pagamentos realizados aparecerão aqui.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: textoSecundario, fontSize: 12),
+                style: TextStyle(color: corTextoSecundario, fontSize: 12),
               ),
             ],
           ),
@@ -703,7 +714,7 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
+                  color: const Color(0xFF16A34A).withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -719,8 +730,8 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
                   children: [
                     Text(
                       formatarMoeda(valor),
-                      style: const TextStyle(
-                        color: textoPrincipal,
+                      style: TextStyle(
+                        color: corTexto,
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                       ),
@@ -728,8 +739,8 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
                     const SizedBox(height: 4),
                     Text(
                       formatarData(data),
-                      style: const TextStyle(
-                        color: textoSecundario,
+                      style: TextStyle(
+                        color: corTextoSecundario,
                         fontSize: 12,
                       ),
                     ),
@@ -739,9 +750,9 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
               IconButton(
                 tooltip: 'Excluir pagamento',
                 onPressed: () => excluirPagamento(id),
-                icon: const Icon(
+                icon: Icon(
                   Icons.delete_outline,
-                  color: Color(0xFFDC2626),
+                  color: cores.error,
                   size: 21,
                 ),
               ),
@@ -759,6 +770,8 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
     bool principal = false,
     bool perigo = false,
   }) {
+    final cores = Theme.of(context).colorScheme;
+
     if (principal) {
       return SizedBox(
         width: double.infinity,
@@ -768,8 +781,8 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
           icon: Icon(icone),
           label: Text(texto),
           style: ElevatedButton.styleFrom(
-            backgroundColor: azul,
-            foregroundColor: Colors.white,
+            backgroundColor: cores.primary,
+            foregroundColor: cores.onPrimary,
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(13),
@@ -788,12 +801,16 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
       height: 48,
       child: OutlinedButton.icon(
         onPressed: aoPressionar,
-        icon: Icon(icone, size: 19),
+        icon: Icon(
+          icone,
+          size: 19,
+          color: perigo ? cores.error : corTexto,
+        ),
         label: Text(texto),
         style: OutlinedButton.styleFrom(
-          foregroundColor: perigo ? const Color(0xFFDC2626) : textoPrincipal,
+          foregroundColor: perigo ? cores.error : corTexto,
           side: BorderSide(
-            color: perigo ? const Color(0xFFFECACA) : const Color(0xFFE2E8F0),
+            color: perigo ? cores.error.withValues(alpha: 0.35) : cores.outline,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(13),
@@ -808,12 +825,14 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
     required Widget child,
     EdgeInsets padding = const EdgeInsets.all(18),
   }) {
+    final cores = Theme.of(context).colorScheme;
+
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cores.surfaceContainerLow,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EDF4)),
+        border: Border.all(color: cores.outlineVariant),
       ),
       child: child,
     );
@@ -821,42 +840,34 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     if (carregando) {
       return Scaffold(
-        backgroundColor: fundo,
-        appBar: AppBar(
-          title: const Text('Detalhes da conta'),
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
-        ),
+        appBar: AppBar(title: const Text('Detalhes da conta')),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (erro != null || conta == null) {
       return Scaffold(
-        backgroundColor: fundo,
-        appBar: AppBar(
-          title: const Text('Detalhes da conta'),
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
-        ),
+        appBar: AppBar(title: const Text('Detalhes da conta')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.error_outline,
-                  color: Color(0xFFDC2626),
+                  color: cores.error,
                   size: 42,
                 ),
                 const SizedBox(height: 12),
                 Text(
                   erro ?? 'Conta não encontrada.',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: textoSecundario),
+                  style: TextStyle(color: cores.onSurfaceVariant),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
@@ -895,18 +906,14 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
         status == 'atrasada' && valorPagoCentavos > 0 && saldoCentavos > 0;
 
     return Scaffold(
-      backgroundColor: fundo,
       appBar: AppBar(
         title: const Text(
           'Detalhes da conta',
           style: TextStyle(
-            color: textoPrincipal,
             fontWeight: FontWeight.w700,
             fontSize: 18,
           ),
         ),
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
         elevation: 0,
         centerTitle: false,
       ),
@@ -925,7 +932,6 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
               pagamentoParcialAtrasado: pagamentoParcialAtrasado,
             ),
             const SizedBox(height: 24),
-
             construirSecaoTitulo(
               'Informações da conta',
               'Confira os dados cadastrados.',
@@ -938,20 +944,20 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
                     titulo: 'Categoria',
                     valor: categoria,
                   ),
-                  const Divider(height: 1, color: Color(0xFFEDF0F5)),
+                  Divider(height: 1, color: cores.outlineVariant),
                   construirInformacao(
                     icone: Icons.calendar_today_outlined,
                     titulo: 'Vencimento',
                     valor: formatarData(dataVencimento),
                   ),
-                  const Divider(height: 1, color: Color(0xFFEDF0F5)),
+                  Divider(height: 1, color: cores.outlineVariant),
                   construirInformacao(
                     icone: Icons.repeat_rounded,
                     titulo: 'Recorrência',
                     valor: widget.recorrencia,
                   ),
                   if (descricao.isNotEmpty) ...[
-                    const Divider(height: 1, color: Color(0xFFEDF0F5)),
+                    Divider(height: 1, color: cores.outlineVariant),
                     construirInformacao(
                       icone: Icons.notes_rounded,
                       titulo: 'Descrição',
@@ -962,7 +968,6 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
               ),
             ),
             const SizedBox(height: 24),
-
             construirSecaoTitulo(
               'Ações da conta',
               'Gerencie esta conta ou registre um pagamento.',
@@ -996,7 +1001,6 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
               ),
             ),
             const SizedBox(height: 24),
-
             construirSecaoTitulo(
               'Histórico de pagamentos',
               'Acompanhe os pagamentos registrados nesta conta.',

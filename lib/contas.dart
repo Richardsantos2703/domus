@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import 'database/contas_repository.dart';
@@ -21,7 +22,6 @@ class _TelaContasState extends State<TelaContas> {
   String filtroSelecionado = 'Todas';
 
   static const Color azulPrincipal = Color(0xFF2563EB);
-  static const Color fundo = Color(0xFFF5F7FB);
 
   @override
   void initState() {
@@ -78,30 +78,31 @@ class _TelaContasState extends State<TelaContas> {
     }
   }
 
-  Color corStatus(String? status) {
+  Color corStatus(String? status, BuildContext context) {
+    final escuro = Theme.of(context).brightness == Brightness.dark;
+
     switch (status) {
       case 'paga':
-        return const Color(0xFF16A34A);
+        return escuro
+            ? const Color(0xFF4ADE80)
+            : const Color(0xFF16A34A);
       case 'atrasada':
-        return const Color(0xFFDC2626);
+        return escuro
+            ? const Color(0xFFF87171)
+            : const Color(0xFFDC2626);
       case 'parcial':
-        return const Color(0xFFD97706);
+        return escuro
+            ? const Color(0xFFFBBF24)
+            : const Color(0xFFD97706);
       default:
-        return azulPrincipal;
+        return escuro
+            ? const Color(0xFF60A5FA)
+            : azulPrincipal;
     }
   }
 
-  Color fundoStatus(String? status) {
-    switch (status) {
-      case 'paga':
-        return const Color(0xFFDCFCE7);
-      case 'atrasada':
-        return const Color(0xFFFEE2E2);
-      case 'parcial':
-        return const Color(0xFFFEF3C7);
-      default:
-        return const Color(0xFFDBEAFE);
-    }
+  Color fundoStatus(String? status, BuildContext context) {
+    return corStatus(status, context).withValues(alpha: 0.14);
   }
 
   IconData iconeCategoria(String categoria) {
@@ -169,13 +170,16 @@ class _TelaContasState extends State<TelaContas> {
   Future<void> abrirCadastro() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const TelaAdicionarConta()),
+      MaterialPageRoute(
+        builder: (context) => const TelaAdicionarConta(),
+      ),
     );
 
     await carregarContas();
   }
 
   Widget construirFiltro(String nome) {
+    final cores = Theme.of(context).colorScheme;
     final selecionado = filtroSelecionado == nome;
 
     return Padding(
@@ -189,32 +193,39 @@ class _TelaContasState extends State<TelaContas> {
             filtroSelecionado = nome;
           });
         },
-        backgroundColor: Colors.white,
+        backgroundColor: cores.surfaceContainer,
         selectedColor: azulPrincipal,
         side: BorderSide(
-          color: selecionado ? azulPrincipal : const Color(0xFFE2E8F0),
+          color: selecionado ? azulPrincipal : cores.outlineVariant,
         ),
         labelStyle: TextStyle(
-          color: selecionado ? Colors.white : const Color(0xFF475569),
+          color: selecionado ? Colors.white : cores.onSurfaceVariant,
           fontWeight: FontWeight.w600,
           fontSize: 13,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
       ),
     );
   }
 
   Widget construirStatus(String? status) {
+    final cor = corStatus(status, context);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 5,
+      ),
       decoration: BoxDecoration(
-        color: fundoStatus(status),
+        color: fundoStatus(status, context),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         nomeStatus(status),
         style: TextStyle(
-          color: corStatus(status),
+          color: cor,
           fontSize: 12,
           fontWeight: FontWeight.w700,
         ),
@@ -223,22 +234,33 @@ class _TelaContasState extends State<TelaContas> {
   }
 
   Widget construirIndicadorRecorrente() {
+    final cores = Theme.of(context).colorScheme;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFBFDBFE)),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 4,
       ),
-      child: const Row(
+      decoration: BoxDecoration(
+        color: cores.primaryContainer,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: cores.primary.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.repeat, size: 13, color: Color(0xFF2563EB)),
-          SizedBox(width: 4),
+          Icon(
+            Icons.repeat,
+            size: 13,
+            color: cores.onPrimaryContainer,
+          ),
+          const SizedBox(width: 4),
           Text(
             'Recorrente',
             style: TextStyle(
-              color: Color(0xFF2563EB),
+              color: cores.onPrimaryContainer,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
@@ -249,6 +271,8 @@ class _TelaContasState extends State<TelaContas> {
   }
 
   Widget construirConta(Map<String, Object?> conta) {
+    final cores = Theme.of(context).colorScheme;
+
     final status = conta['status'] as String?;
     final categoria = conta['categoria_nome'] as String? ?? 'Outros';
     final vencimento = conta['data_vencimento'] as String;
@@ -258,14 +282,14 @@ class _TelaContasState extends State<TelaContas> {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: Colors.white,
+      color: cores.surfaceContainerLow,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
           color: status == 'atrasada'
-              ? const Color(0xFFFECACA)
-              : const Color(0xFFE8EDF4),
+              ? cores.error.withValues(alpha: 0.4)
+              : cores.outlineVariant,
         ),
       ),
       child: InkWell(
@@ -283,12 +307,12 @@ class _TelaContasState extends State<TelaContas> {
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
+                      color: cores.primaryContainer,
                       borderRadius: BorderRadius.circular(13),
                     ),
                     child: Icon(
                       iconeCategoria(categoria),
-                      color: azulPrincipal,
+                      color: cores.onPrimaryContainer,
                       size: 23,
                     ),
                   ),
@@ -299,10 +323,10 @@ class _TelaContasState extends State<TelaContas> {
                       children: [
                         Text(
                           conta['nome'] as String? ?? 'Conta',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E293B),
+                            color: cores.onSurface,
                           ),
                         ),
                         const SizedBox(height: 5),
@@ -313,12 +337,13 @@ class _TelaContasState extends State<TelaContas> {
                           children: [
                             Text(
                               categoria,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFF64748B),
+                                color: cores.onSurfaceVariant,
                               ),
                             ),
-                            if (recorrente) construirIndicadorRecorrente(),
+                            if (recorrente)
+                              construirIndicadorRecorrente(),
                           ],
                         ),
                       ],
@@ -332,38 +357,41 @@ class _TelaContasState extends State<TelaContas> {
                 const SizedBox(height: 14),
                 Text(
                   descricao,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF64748B),
+                    color: cores.onSurfaceVariant,
                   ),
                 ),
               ],
               const SizedBox(height: 16),
-              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              Divider(
+                height: 1,
+                color: cores.outlineVariant,
+              ),
               const SizedBox(height: 14),
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.calendar_today_outlined,
                     size: 15,
-                    color: Color(0xFF64748B),
+                    color: cores.onSurfaceVariant,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       'Vencimento: ${formatarData(vencimento)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF64748B),
+                        color: cores.onSurfaceVariant,
                       ),
                     ),
                   ),
                   Text(
                     formatarMoeda(conta['valor_total_centavos']),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF1E293B),
+                      color: cores.onSurface,
                     ),
                   ),
                 ],
@@ -376,6 +404,8 @@ class _TelaContasState extends State<TelaContas> {
   }
 
   Widget construirConteudoVazio() {
+    final cores = Theme.of(context).colorScheme;
+
     final mensagem = filtroSelecionado == 'Todas'
         ? 'Você ainda não possui contas cadastradas.'
         : 'Nenhuma conta encontrada neste filtro.';
@@ -390,29 +420,32 @@ class _TelaContasState extends State<TelaContas> {
               width: 76,
               height: 76,
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
+                color: cores.primaryContainer,
                 borderRadius: BorderRadius.circular(24),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.receipt_long_outlined,
                 size: 36,
-                color: azulPrincipal,
+                color: cores.onPrimaryContainer,
               ),
             ),
             const SizedBox(height: 18),
-            const Text(
+            Text(
               'Tudo organizado por aqui?',
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1E293B),
+                color: cores.onSurface,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               mensagem,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+              style: TextStyle(
+                fontSize: 14,
+                color: cores.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -422,16 +455,18 @@ class _TelaContasState extends State<TelaContas> {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: fundo,
+      backgroundColor: cores.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: cores.surface,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Minhas Contas',
           style: TextStyle(
-            color: Color(0xFF1E293B),
+            color: cores.onSurface,
             fontWeight: FontWeight.w700,
             fontSize: 20,
           ),
@@ -439,107 +474,129 @@ class _TelaContasState extends State<TelaContas> {
         actions: [
           IconButton(
             onPressed: carregarContas,
-            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF475569)),
+            icon: Icon(
+              Icons.refresh_rounded,
+              color: cores.onSurfaceVariant,
+            ),
             tooltip: 'Atualizar',
           ),
           const SizedBox(width: 8),
         ],
       ),
       body: carregando
-          ? const Center(child: CircularProgressIndicator(color: azulPrincipal))
-          : erro != null
           ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 44,
-                      color: Color(0xFFDC2626),
+              child: CircularProgressIndicator(
+                color: cores.primary,
+              ),
+            )
+          : erro != null
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 44,
+                          color: cores.error,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          erro!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: cores.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: carregarContas,
+                          child: const Text('Tentar novamente'),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    Text(erro!, textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: carregarContas,
-                      child: const Text('Tentar novamente'),
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Organize suas despesas',
+                            style: TextStyle(
+                              fontSize: 21,
+                              fontWeight: FontWeight.w800,
+                              color: cores.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            '${contas.length} ${contas.length == 1 ? 'conta cadastrada' : 'contas cadastradas'}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: cores.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+                      child: Row(
+                        children: [
+                          construirFiltro('Todas'),
+                          construirFiltro('Pendentes'),
+                          construirFiltro('Atrasadas'),
+                          construirFiltro('Parciais'),
+                          construirFiltro('Pagas'),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: contasFiltradas.isEmpty
+                          ? RefreshIndicator(
+                              color: cores.primary,
+                              onRefresh: carregarContas,
+                              child: ListView(
+                                physics:
+                                    const AlwaysScrollableScrollPhysics(),
+                                children: [
+                                  SizedBox(
+                                    height: 350,
+                                    child: construirConteudoVazio(),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : RefreshIndicator(
+                              color: cores.primary,
+                              onRefresh: carregarContas,
+                              child: ListView.builder(
+                                physics:
+                                    const AlwaysScrollableScrollPhysics(),
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  0,
+                                  16,
+                                  100,
+                                ),
+                                itemCount: contasFiltradas.length,
+                                itemBuilder: (context, index) {
+                                  return construirConta(
+                                    contasFiltradas[index],
+                                  );
+                                },
+                              ),
+                            ),
                     ),
                   ],
                 ),
-              ),
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Organize suas despesas',
-                        style: TextStyle(
-                          fontSize: 21,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF1E293B),
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        '${contas.length} ${contas.length == 1 ? 'conta cadastrada' : 'contas cadastradas'}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
-                  child: Row(
-                    children: [
-                      construirFiltro('Todas'),
-                      construirFiltro('Pendentes'),
-                      construirFiltro('Atrasadas'),
-                      construirFiltro('Parciais'),
-                      construirFiltro('Pagas'),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: contasFiltradas.isEmpty
-                      ? RefreshIndicator(
-                          color: azulPrincipal,
-                          onRefresh: carregarContas,
-                          child: ListView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            children: [
-                              SizedBox(
-                                height: 350,
-                                child: construirConteudoVazio(),
-                              ),
-                            ],
-                          ),
-                        )
-                      : RefreshIndicator(
-                          color: azulPrincipal,
-                          onRefresh: carregarContas,
-                          child: ListView.builder(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                            itemCount: contasFiltradas.length,
-                            itemBuilder: (context, index) {
-                              return construirConta(contasFiltradas[index]);
-                            },
-                          ),
-                        ),
-                ),
-              ],
-            ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: abrirCadastro,
         backgroundColor: azulPrincipal,

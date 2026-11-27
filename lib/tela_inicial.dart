@@ -1,5 +1,7 @@
+
 import 'package:flutter/material.dart';
 
+import 'configuracoes.dart';
 import 'database/contas_repository.dart';
 import 'contas.dart';
 import 'adicionar_conta.dart';
@@ -49,14 +51,30 @@ class _TelaInicialState extends State<TelaInicial> {
       return dataA.compareTo(dataB);
     });
 
+    // Indicadores gerais: consideram todas as contas cadastradas.
+    final quantidadePendentes = contas.where((conta) {
+      return conta['status'] == 'pendente';
+    }).length;
+
     final quantidadeAtrasadas = contas.where((conta) {
       return conta['status'] == 'atrasada';
+    }).length;
+
+    final quantidadeParciais = contas.where((conta) {
+      return conta['status'] == 'parcial';
+    }).length;
+
+    final quantidadePagas = contas.where((conta) {
+      return conta['status'] == 'paga';
     }).length;
 
     return _DadosTelaInicial(
       resumo: resumo,
       proximasContas: proximasContas.take(5).toList(),
+      quantidadePendentes: quantidadePendentes,
       quantidadeAtrasadas: quantidadeAtrasadas,
+      quantidadeParciais: quantidadeParciais,
+      quantidadePagas: quantidadePagas,
     );
   }
 
@@ -105,11 +123,14 @@ class _TelaInicialState extends State<TelaInicial> {
 
   @override
   Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final cores = tema.colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: cores.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: cores.surface,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         titleSpacing: 20,
         title: Row(
@@ -118,26 +139,43 @@ class _TelaInicialState extends State<TelaInicial> {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F0FE),
+                color: cores.primaryContainer,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.account_balance_wallet_outlined,
-                color: Color(0xFF2563EB),
+                color: cores.primary,
                 size: 22,
               ),
             ),
             const SizedBox(width: 11),
-            const Text(
+            Text(
               'Domus',
               style: TextStyle(
-                color: Color(0xFF172033),
+                color: cores.onSurface,
                 fontWeight: FontWeight.bold,
                 fontSize: 21,
               ),
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Configurações',
+            icon: Icon(
+              Icons.settings_outlined,
+              color: cores.onSurface,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TelaConfiguracoes(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<_DadosTelaInicial>(
         future: _dadosFuture,
@@ -162,15 +200,16 @@ class _TelaInicialState extends State<TelaInicial> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.error_outline,
                       size: 48,
-                      color: Colors.red,
+                      color: cores.error,
                     ),
                     const SizedBox(height: 12),
-                    const Text(
+                    Text(
                       'Não foi possível carregar suas contas.',
                       textAlign: TextAlign.center,
+                      style: TextStyle(color: cores.onSurface),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
@@ -193,15 +232,18 @@ class _TelaInicialState extends State<TelaInicial> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Olá!',
-                    style: TextStyle(color: Color(0xFF64748B), fontSize: 15),
+                    style: TextStyle(
+                      color: cores.onSurfaceVariant,
+                      fontSize: 15,
+                    ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Controle suas contas',
                     style: TextStyle(
-                      color: Color(0xFF172033),
+                      color: cores.onSurface,
                       fontSize: 25,
                       fontWeight: FontWeight.bold,
                     ),
@@ -227,9 +269,9 @@ class _TelaInicialState extends State<TelaInicial> {
                         _abrirTela(const TelaResumoMensal());
                       },
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF2563EB),
-                        backgroundColor: Colors.white,
-                        side: const BorderSide(color: Color(0xFFD7E3F8)),
+                        foregroundColor: cores.primary,
+                        backgroundColor: cores.surfaceContainer,
+                        side: BorderSide(color: cores.outlineVariant),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -266,10 +308,7 @@ class _TelaInicialState extends State<TelaInicial> {
                             width: largura,
                             child: _CardResumo(
                               titulo: 'Pendentes',
-                              valor:
-                                  dados.resumo['quantidade_pendentes']
-                                      as int? ??
-                                  0,
+                              valor: dados.quantidadePendentes,
                               cor: const Color(0xFFD97706),
                               icone: Icons.schedule_rounded,
                             ),
@@ -278,10 +317,7 @@ class _TelaInicialState extends State<TelaInicial> {
                             width: largura,
                             child: _CardResumo(
                               titulo: 'Atrasadas',
-                              valor:
-                                  dados.resumo['quantidade_atrasadas']
-                                      as int? ??
-                                  0,
+                              valor: dados.quantidadeAtrasadas,
                               cor: const Color(0xFFDC2626),
                               icone: Icons.warning_amber_rounded,
                             ),
@@ -290,10 +326,8 @@ class _TelaInicialState extends State<TelaInicial> {
                             width: largura,
                             child: _CardResumo(
                               titulo: 'Parciais',
-                              valor:
-                                  dados.resumo['quantidade_parciais'] as int? ??
-                                  0,
-                              cor: const Color(0xFFEA580C),
+                              valor: dados.quantidadeParciais,
+                              cor: const Color(0xFFEA5808),
                               icone: Icons.pie_chart_outline_rounded,
                             ),
                           ),
@@ -301,8 +335,7 @@ class _TelaInicialState extends State<TelaInicial> {
                             width: largura,
                             child: _CardResumo(
                               titulo: 'Pagas',
-                              valor:
-                                  dados.resumo['quantidade_pagas'] as int? ?? 0,
+                              valor: dados.quantidadePagas,
                               cor: const Color(0xFF16A34A),
                               icone: Icons.check_circle_outline_rounded,
                             ),
@@ -329,15 +362,17 @@ class _TelaInicialState extends State<TelaInicial> {
                       margin: const EdgeInsets.only(bottom: 14),
                       padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEF2F2),
-                        border: Border.all(color: const Color(0xFFFECACA)),
+                        color: cores.errorContainer,
+                        border: Border.all(
+                          color: cores.error.withValues(alpha: 0.35),
+                        ),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.warning_amber_rounded,
-                            color: Color(0xFFDC2626),
+                            color: cores.onErrorContainer,
                             size: 27,
                           ),
                           const SizedBox(width: 12),
@@ -346,8 +381,8 @@ class _TelaInicialState extends State<TelaInicial> {
                               dados.quantidadeAtrasadas == 1
                                   ? 'Atenção! Você tem 1 conta atrasada.'
                                   : 'Atenção! Você tem ${dados.quantidadeAtrasadas} contas atrasadas.',
-                              style: const TextStyle(
-                                color: Color(0xFF991B1B),
+                              style: TextStyle(
+                                color: cores.onErrorContainer,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
                               ),
@@ -366,23 +401,23 @@ class _TelaInicialState extends State<TelaInicial> {
                         vertical: 28,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: cores.surfaceContainer,
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: const Color(0xFFE8EDF5)),
+                        border: Border.all(color: cores.outlineVariant),
                       ),
-                      child: const Column(
+                      child: Column(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.check_circle_outline_rounded,
                             size: 42,
                             color: Color(0xFF16A34A),
                           ),
-                          SizedBox(height: 12),
+                          const SizedBox(height: 12),
                           Text(
                             'Nenhuma conta próxima do vencimento.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Color(0xFF475569),
+                              color: cores.onSurfaceVariant,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -417,8 +452,9 @@ class _TelaInicialState extends State<TelaInicial> {
                         _abrirTela(const TelaContas());
                       },
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF2563EB),
-                        side: const BorderSide(color: Color(0xFFD7E3F8)),
+                        foregroundColor: cores.primary,
+                        backgroundColor: cores.surfaceContainer,
+                        side: BorderSide(color: cores.outlineVariant),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -458,12 +494,19 @@ class _TelaInicialState extends State<TelaInicial> {
 class _DadosTelaInicial {
   final Map<String, Object?> resumo;
   final List<Map<String, Object?>> proximasContas;
+
+  final int quantidadePendentes;
   final int quantidadeAtrasadas;
+  final int quantidadeParciais;
+  final int quantidadePagas;
 
   _DadosTelaInicial({
     required this.resumo,
     required this.proximasContas,
+    required this.quantidadePendentes,
     required this.quantidadeAtrasadas,
+    required this.quantidadeParciais,
+    required this.quantidadePagas,
   });
 }
 
@@ -471,17 +514,22 @@ class _TituloSecao extends StatelessWidget {
   final String titulo;
   final String subtitulo;
 
-  const _TituloSecao({required this.titulo, required this.subtitulo});
+  const _TituloSecao({
+    required this.titulo,
+    required this.subtitulo,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           titulo,
-          style: const TextStyle(
-            color: Color(0xFF172033),
+          style: TextStyle(
+            color: cores.onSurface,
             fontSize: 19,
             fontWeight: FontWeight.bold,
           ),
@@ -489,7 +537,10 @@ class _TituloSecao extends StatelessWidget {
         const SizedBox(height: 3),
         Text(
           subtitulo,
-          style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+          style: TextStyle(
+            color: cores.onSurfaceVariant,
+            fontSize: 13,
+          ),
         ),
       ],
     );
@@ -500,7 +551,10 @@ class _CardTotalMes extends StatelessWidget {
   final String total;
   final String pago;
 
-  const _CardTotalMes({required this.total, required this.pago});
+  const _CardTotalMes({
+    required this.total,
+    required this.pago,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -562,7 +616,10 @@ class _CardTotalMes extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          Container(height: 1, color: Colors.white.withValues(alpha: 0.22)),
+          Container(
+            height: 1,
+            color: Colors.white.withValues(alpha: 0.22),
+          ),
           const SizedBox(height: 14),
           Row(
             children: [
@@ -574,7 +631,10 @@ class _CardTotalMes extends StatelessWidget {
               const SizedBox(width: 8),
               const Text(
                 'Pago neste mês',
-                style: TextStyle(color: Color(0xFFE8F0FF), fontSize: 13),
+                style: TextStyle(
+                  color: Color(0xFFE8F0FF),
+                  fontSize: 13,
+                ),
               ),
               const Spacer(),
               Flexible(
@@ -611,12 +671,14 @@ class _CardResumo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cores.surfaceContainer,
         borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: const Color(0xFFE8EDF5)),
+        border: Border.all(color: cores.outlineVariant),
       ),
       child: Row(
         children: [
@@ -636,8 +698,8 @@ class _CardResumo extends StatelessWidget {
               children: [
                 Text(
                   valor.toString(),
-                  style: const TextStyle(
-                    color: Color(0xFF172033),
+                  style: TextStyle(
+                    color: cores.onSurface,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
@@ -645,8 +707,8 @@ class _CardResumo extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   titulo,
-                  style: const TextStyle(
-                    color: Color(0xFF64748B),
+                  style: TextStyle(
+                    color: cores.onSurfaceVariant,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -681,32 +743,36 @@ class _Conta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     final corStatus = atrasada
         ? const Color(0xFFDC2626)
         : parcial
-        ? const Color(0xFFEA580C)
-        : const Color(0xFFD97706);
+            ? const Color(0xFFEA580C)
+            : const Color(0xFFD97706);
 
     final textoStatus = atrasada
         ? 'Atrasada'
         : parcial
-        ? 'Pagamento parcial'
-        : 'Pendente';
+            ? 'Pagamento parcial'
+            : 'Pendente';
 
     final iconeStatus = atrasada
         ? Icons.warning_amber_rounded
         : parcial
-        ? Icons.pie_chart_outline_rounded
-        : Icons.schedule_rounded;
+            ? Icons.pie_chart_outline_rounded
+            : Icons.schedule_rounded;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cores.surfaceContainer,
         borderRadius: BorderRadius.circular(17),
         border: Border.all(
-          color: atrasada ? const Color(0xFFFECACA) : const Color(0xFFE8EDF5),
+          color: atrasada
+              ? cores.error.withValues(alpha: 0.35)
+              : cores.outlineVariant,
         ),
       ),
       child: Row(
@@ -729,8 +795,8 @@ class _Conta extends StatelessWidget {
                   nome,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF172033),
+                  style: TextStyle(
+                    color: cores.onSurface,
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
@@ -743,23 +809,25 @@ class _Conta extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8F0FE),
-                      border: Border.all(color: const Color(0xFFD7E3F8)),
+                      color: cores.primaryContainer,
+                      border: Border.all(
+                        color: cores.primary.withValues(alpha: 0.25),
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.repeat_rounded,
-                          color: Color(0xFF2563EB),
+                          color: cores.onPrimaryContainer,
                           size: 13,
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text(
                           'Recorrente',
                           style: TextStyle(
-                            color: Color(0xFF2563EB),
+                            color: cores.onPrimaryContainer,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
@@ -774,8 +842,8 @@ class _Conta extends StatelessWidget {
                     descricao,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF64748B),
+                    style: TextStyle(
+                      color: cores.onSurfaceVariant,
                       fontSize: 12,
                     ),
                   ),
@@ -792,8 +860,8 @@ class _Conta extends StatelessWidget {
                 const SizedBox(height: 5),
                 Text(
                   'Saldo: $valor',
-                  style: const TextStyle(
-                    color: Color(0xFF475569),
+                  style: TextStyle(
+                    color: cores.onSurfaceVariant,
                     fontSize: 13,
                   ),
                 ),
@@ -804,17 +872,18 @@ class _Conta extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
+              Text(
                 'Vencimento',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10),
+                style: TextStyle(
+                  color: cores.onSurfaceVariant,
+                  fontSize: 10,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 vencimento,
                 style: TextStyle(
-                  color: atrasada
-                      ? const Color(0xFFDC2626)
-                      : const Color(0xFF334155),
+                  color: atrasada ? cores.error : cores.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),

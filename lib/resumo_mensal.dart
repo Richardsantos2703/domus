@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import 'database/contas_repository.dart';
@@ -18,19 +19,12 @@ class _TelaResumoMensalState extends State<TelaResumoMensal> {
   bool _mostrarTodas = false;
 
   static const List<String> _meses = [
-    'Janeiro',
-    'Fevereiro',
-    'Março',
-    'Abril',
-    'Maio',
-    'Junho',
-    'Julho',
-    'Agosto',
-    'Setembro',
-    'Outubro',
-    'Novembro',
-    'Dezembro',
+    'Janeiro', 'Fevereiro', 'Março', 'Abril',
+    'Maio', 'Junho', 'Julho', 'Agosto',
+    'Setembro', 'Outubro', 'Novembro', 'Dezembro',
   ];
+
+  ColorScheme get _cores => Theme.of(context).colorScheme;
 
   @override
   void initState() {
@@ -105,16 +99,18 @@ class _TelaResumoMensalState extends State<TelaResumoMensal> {
   String get _nomeMes =>
       '${_meses[_mesSelecionado.month - 1]} de ${_mesSelecionado.year}';
 
-  Color _corStatus(String status) {
+  Color _corStatus(String status, Brightness brightness) {
+    final escuro = brightness == Brightness.dark;
+
     switch (status) {
       case 'paga':
-        return const Color(0xFF16A34A);
+        return escuro ? const Color(0xFF4ADE80) : const Color(0xFF16A34A);
       case 'atrasada':
-        return const Color(0xFFDC2626);
+        return escuro ? const Color(0xFFF87171) : const Color(0xFFDC2626);
       case 'parcial':
-        return const Color(0xFFEA580C);
+        return escuro ? const Color(0xFFFBBF24) : const Color(0xFFEA580C);
       default:
-        return const Color(0xFFD97706);
+        return escuro ? const Color(0xFF60A5FA) : const Color(0xFFD97706);
     }
   }
 
@@ -133,28 +129,27 @@ class _TelaResumoMensalState extends State<TelaResumoMensal> {
 
   @override
   Widget build(BuildContext context) {
+    final cores = _cores;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: cores.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: cores.surface,
+        surfaceTintColor: cores.surface,
         elevation: 0,
         centerTitle: false,
+        foregroundColor: cores.onSurface,
         title: const Text(
           'Resumo mensal',
-          style: TextStyle(
-            color: Color(0xFF172033),
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
       ),
       body: FutureBuilder<_DadosResumoMensal>(
         future: _dadosFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+            return Center(
+              child: CircularProgressIndicator(color: cores.primary),
             );
           }
 
@@ -165,15 +160,12 @@ class _TelaResumoMensalState extends State<TelaResumoMensal> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: Color(0xFFDC2626),
-                    ),
+                    Icon(Icons.error_outline, size: 48, color: cores.error),
                     const SizedBox(height: 12),
-                    const Text(
+                    Text(
                       'Não foi possível carregar o resumo mensal.',
                       textAlign: TextAlign.center,
+                      style: TextStyle(color: cores.onSurface),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
@@ -203,7 +195,7 @@ class _TelaResumoMensalState extends State<TelaResumoMensal> {
               : dados.contas.take(3).toList();
 
           return RefreshIndicator(
-            color: const Color(0xFF2563EB),
+            color: cores.primary,
             onRefresh: _atualizarDados,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -266,13 +258,13 @@ class _TelaResumoMensalState extends State<TelaResumoMensal> {
                           vertical: 7,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE8F0FE),
+                          color: cores.primaryContainer,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           '${dados.contas.length}',
-                          style: const TextStyle(
-                            color: Color(0xFF2563EB),
+                          style: TextStyle(
+                            color: cores.onPrimaryContainer,
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
@@ -302,7 +294,10 @@ class _TelaResumoMensalState extends State<TelaResumoMensal> {
                           (conta['saldo_centavos'] as num?)?.toInt() ?? 0,
                         ),
                         status: _nomeStatus(status),
-                        corStatus: _corStatus(status),
+                        corStatus: _corStatus(
+                          status,
+                          Theme.of(context).brightness,
+                        ),
                         recorrente: conta['recorrencia_id'] != null,
                       );
                     }),
@@ -318,8 +313,8 @@ class _TelaResumoMensalState extends State<TelaResumoMensal> {
                             });
                           },
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF2563EB),
-                            side: const BorderSide(color: Color(0xFFBFDBFE)),
+                            foregroundColor: cores.primary,
+                            side: BorderSide(color: cores.outline),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
@@ -367,19 +362,12 @@ class _DialogoSelecionarMesState extends State<_DialogoSelecionarMes> {
   late int _ano;
 
   static const List<String> _meses = [
-    'Janeiro',
-    'Fevereiro',
-    'Março',
-    'Abril',
-    'Maio',
-    'Junho',
-    'Julho',
-    'Agosto',
-    'Setembro',
-    'Outubro',
-    'Novembro',
-    'Dezembro',
+    'Janeiro', 'Fevereiro', 'Março', 'Abril',
+    'Maio', 'Junho', 'Julho', 'Agosto',
+    'Setembro', 'Outubro', 'Novembro', 'Dezembro',
   ];
+
+  ColorScheme get _cores => Theme.of(context).colorScheme;
 
   @override
   void initState() {
@@ -394,12 +382,15 @@ class _DialogoSelecionarMesState extends State<_DialogoSelecionarMes> {
     final anos = List.generate(anoAtual + 11 - 2000, (index) => 2000 + index);
 
     return AlertDialog(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.white,
+      backgroundColor: _cores.surfaceContainerHigh,
+      surfaceTintColor: _cores.surfaceTint,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      title: const Text(
+      title: Text(
         'Escolher período',
-        style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF172033)),
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: _cores.onSurface,
+        ),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -407,26 +398,13 @@ class _DialogoSelecionarMesState extends State<_DialogoSelecionarMes> {
         children: [
           Text(
             'Selecione o mês e o ano que deseja consultar.',
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 14, color: _cores.onSurfaceVariant),
           ),
           const SizedBox(height: 20),
           DropdownButtonFormField<int>(
             initialValue: _mes,
             isExpanded: true,
-            decoration: InputDecoration(
-              labelText: 'Mês',
-              prefixIcon: const Icon(Icons.calendar_month),
-              filled: true,
-              fillColor: const Color(0xFFF5F7FB),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(13),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(13),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-            ),
+            decoration: _decoracaoDropdown('Mês', Icons.calendar_month),
             items: List.generate(
               _meses.length,
               (index) => DropdownMenuItem(
@@ -442,20 +420,7 @@ class _DialogoSelecionarMesState extends State<_DialogoSelecionarMes> {
           DropdownButtonFormField<int>(
             initialValue: _ano,
             isExpanded: true,
-            decoration: InputDecoration(
-              labelText: 'Ano',
-              prefixIcon: const Icon(Icons.date_range),
-              filled: true,
-              fillColor: const Color(0xFFF5F7FB),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(13),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(13),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-            ),
+            decoration: _decoracaoDropdown('Ano', Icons.date_range),
             items: anos.map((ano) {
               return DropdownMenuItem(value: ano, child: Text(ano.toString()));
             }).toList(),
@@ -469,15 +434,15 @@ class _DialogoSelecionarMesState extends State<_DialogoSelecionarMes> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text(
+          child: Text(
             'Cancelar',
-            style: TextStyle(color: Color(0xFF64748B)),
+            style: TextStyle(color: _cores.onSurfaceVariant),
           ),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2563EB),
-            foregroundColor: Colors.white,
+            backgroundColor: _cores.primary,
+            foregroundColor: _cores.onPrimary,
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -487,6 +452,26 @@ class _DialogoSelecionarMesState extends State<_DialogoSelecionarMes> {
           child: const Text('Aplicar'),
         ),
       ],
+    );
+  }
+
+  InputDecoration _decoracaoDropdown(String label, IconData icone) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icone, color: _cores.onSurfaceVariant),
+      filled: true,
+      fillColor: _cores.surfaceContainerHighest.withValues(alpha: 0.35),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(13),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(13),
+        borderSide: BorderSide(color: _cores.outlineVariant),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(13),
+        borderSide: BorderSide(color: _cores.primary, width: 1.5),
+      ),
     );
   }
 }
@@ -506,21 +491,23 @@ class _TituloSecao extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           titulo,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 19,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF172033),
+            color: cores.onSurface,
           ),
         ),
         const SizedBox(height: 3),
         Text(
           subtitulo,
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          style: TextStyle(fontSize: 12, color: cores.onSurfaceVariant),
         ),
       ],
     );
@@ -542,12 +529,14 @@ class _SeletorMes extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cores.surfaceContainerLow,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EDF4)),
+        border: Border.all(color: cores.outlineVariant),
       ),
       child: Row(
         children: [
@@ -555,8 +544,8 @@ class _SeletorMes extends StatelessWidget {
             onPressed: voltar,
             tooltip: 'Mês anterior',
             style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFF1F5F9),
-              foregroundColor: const Color(0xFF334155),
+              backgroundColor: cores.surfaceContainerHighest,
+              foregroundColor: cores.onSurface,
             ),
             icon: const Icon(Icons.chevron_left),
           ),
@@ -575,17 +564,17 @@ class _SeletorMes extends StatelessWidget {
                           child: Text(
                             nomeMes,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF172033),
+                              color: cores.onSurface,
                             ),
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(
+                        Icon(
                           Icons.keyboard_arrow_down,
-                          color: Color(0xFF2563EB),
+                          color: cores.primary,
                           size: 22,
                         ),
                       ],
@@ -594,7 +583,7 @@ class _SeletorMes extends StatelessWidget {
                     Text(
                       'Escolher mês e ano',
                       style: TextStyle(
-                        color: Colors.grey.shade600,
+                        color: cores.onSurfaceVariant,
                         fontSize: 11,
                       ),
                     ),
@@ -607,8 +596,8 @@ class _SeletorMes extends StatelessWidget {
             onPressed: avancar,
             tooltip: 'Próximo mês',
             style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFF1F5F9),
-              foregroundColor: const Color(0xFF334155),
+              backgroundColor: cores.surfaceContainerHighest,
+              foregroundColor: cores.onSurface,
             ),
             icon: const Icon(Icons.chevron_right),
           ),
@@ -733,25 +722,30 @@ class _CardMovimentacao extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+    final corVerde = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF4ADE80)
+        : const Color(0xFF16A34A);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cores.surfaceContainerLow,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EDF4)),
+        border: Border.all(color: cores.outlineVariant),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFDCFCE7),
+              color: corVerde.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.payments_outlined,
-              color: Color(0xFF16A34A),
+              color: corVerde,
               size: 25,
             ),
           ),
@@ -763,7 +757,7 @@ class _CardMovimentacao extends StatelessWidget {
                 Text(
                   'Pagamentos realizados no mês',
                   style: TextStyle(
-                    color: Colors.grey.shade700,
+                    color: cores.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
@@ -771,8 +765,8 @@ class _CardMovimentacao extends StatelessWidget {
                 const SizedBox(height: 5),
                 Text(
                   valor,
-                  style: const TextStyle(
-                    color: Color(0xFF16A34A),
+                  style: TextStyle(
+                    color: corVerde,
                     fontWeight: FontWeight.bold,
                     fontSize: 21,
                   ),
@@ -803,36 +797,36 @@ class _CardGraficoRosca extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+    final escuro = Theme.of(context).brightness == Brightness.dark;
+
+    final corPendente = escuro
+        ? const Color(0xFFFBBF24)
+        : const Color(0xFFD97706);
+    final corAtrasada = escuro
+        ? const Color(0xFFF87171)
+        : const Color(0xFFDC2626);
+    final corParcial = escuro
+        ? const Color(0xFFFB923C)
+        : const Color(0xFFEA580C);
+    final corPaga = escuro
+        ? const Color(0xFF4ADE80)
+        : const Color(0xFF16A34A);
+
     final itens = [
-      _ItemLegenda(
-        titulo: 'Pendentes',
-        quantidade: pendentes,
-        cor: const Color(0xFFD97706),
-      ),
-      _ItemLegenda(
-        titulo: 'Atrasadas',
-        quantidade: atrasadas,
-        cor: const Color(0xFFDC2626),
-      ),
-      _ItemLegenda(
-        titulo: 'Parciais',
-        quantidade: parciais,
-        cor: const Color(0xFFEA580C),
-      ),
-      _ItemLegenda(
-        titulo: 'Pagas',
-        quantidade: pagas,
-        cor: const Color(0xFF16A34A),
-      ),
+      _ItemLegenda(titulo: 'Pendentes', quantidade: pendentes, cor: corPendente),
+      _ItemLegenda(titulo: 'Atrasadas', quantidade: atrasadas, cor: corAtrasada),
+      _ItemLegenda(titulo: 'Parciais', quantidade: parciais, cor: corParcial),
+      _ItemLegenda(titulo: 'Pagas', quantidade: pagas, cor: corPaga),
     ];
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cores.surfaceContainerLow,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EDF4)),
+        border: Border.all(color: cores.outlineVariant),
       ),
       child: Column(
         children: [
@@ -845,12 +839,8 @@ class _CardGraficoRosca extends StatelessWidget {
                   size: const Size(180, 180),
                   painter: _RoscaPainter(
                     valores: [pendentes, atrasadas, parciais, pagas],
-                    cores: [
-                      const Color(0xFFD97706),
-                      const Color(0xFFDC2626),
-                      const Color(0xFFEA580C),
-                      const Color(0xFF16A34A),
-                    ],
+                    cores: [corPendente, corAtrasada, corParcial, corPaga],
+                    corVazia: cores.surfaceContainerHighest,
                   ),
                 ),
                 Column(
@@ -858,16 +848,16 @@ class _CardGraficoRosca extends StatelessWidget {
                   children: [
                     Text(
                       total.toString(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF172033),
+                        color: cores.onSurface,
                       ),
                     ),
                     Text(
                       total == 1 ? 'conta' : 'contas',
                       style: TextStyle(
-                        color: Colors.grey.shade600,
+                        color: cores.onSurfaceVariant,
                         fontSize: 13,
                       ),
                     ),
@@ -877,7 +867,7 @@ class _CardGraficoRosca extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Divider(color: Colors.grey.shade200),
+          Divider(color: cores.outlineVariant),
           ...itens.map((item) {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 9),
@@ -895,17 +885,17 @@ class _CardGraficoRosca extends StatelessWidget {
                   Expanded(
                     child: Text(
                       item.titulo,
-                      style: const TextStyle(
-                        color: Color(0xFF334155),
+                      style: TextStyle(
+                        color: cores.onSurface,
                         fontSize: 14,
                       ),
                     ),
                   ),
                   Text(
                     item.quantidade.toString(),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF172033),
+                      color: cores.onSurface,
                     ),
                   ),
                 ],
@@ -933,8 +923,13 @@ class _ItemLegenda {
 class _RoscaPainter extends CustomPainter {
   final List<int> valores;
   final List<Color> cores;
+  final Color corVazia;
 
-  const _RoscaPainter({required this.valores, required this.cores});
+  const _RoscaPainter({
+    required this.valores,
+    required this.cores,
+    required this.corVazia,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -951,7 +946,7 @@ class _RoscaPainter extends CustomPainter {
       ..strokeCap = StrokeCap.butt;
 
     if (total == 0) {
-      pincel.color = const Color(0xFFE2E8F0);
+      pincel.color = corVazia;
       canvas.drawArc(retangulo, 0, 6.283185307179586, false, pincel);
       return;
     }
@@ -970,7 +965,8 @@ class _RoscaPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _RoscaPainter oldDelegate) {
     return valores.toString() != oldDelegate.valores.toString() ||
-        cores.toString() != oldDelegate.cores.toString();
+        cores.toString() != oldDelegate.cores.toString() ||
+        corVazia != oldDelegate.corVazia;
   }
 }
 
@@ -989,15 +985,26 @@ class _CardGraficoBarras extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+    final escuro = Theme.of(context).brightness == Brightness.dark;
+
+    final corAzul = cores.primary;
+    final corVerde = escuro
+        ? const Color(0xFF4ADE80)
+        : const Color(0xFF16A34A);
+    final corLaranja = escuro
+        ? const Color(0xFFFB923C)
+        : const Color(0xFFEA580C);
+
     final maiorValor = total > 0 ? total : 1;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cores.surfaceContainerLow,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EDF4)),
+        border: Border.all(color: cores.outlineVariant),
       ),
       child: Column(
         children: [
@@ -1005,7 +1012,7 @@ class _CardGraficoBarras extends StatelessWidget {
             titulo: 'Total',
             valor: total,
             maiorValor: maiorValor,
-            cor: const Color(0xFF2563EB),
+            cor: corAzul,
             formatarMoeda: formatarMoeda,
           ),
           const SizedBox(height: 24),
@@ -1013,7 +1020,7 @@ class _CardGraficoBarras extends StatelessWidget {
             titulo: 'Pago nas contas',
             valor: pago,
             maiorValor: maiorValor,
-            cor: const Color(0xFF16A34A),
+            cor: corVerde,
             formatarMoeda: formatarMoeda,
           ),
           const SizedBox(height: 24),
@@ -1021,7 +1028,7 @@ class _CardGraficoBarras extends StatelessWidget {
             titulo: 'Saldo em aberto',
             valor: saldo,
             maiorValor: maiorValor,
-            cor: const Color(0xFFEA580C),
+            cor: corLaranja,
             formatarMoeda: formatarMoeda,
           ),
         ],
@@ -1047,6 +1054,7 @@ class _BarraComparativa extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
     final proporcao = (valor / maiorValor).clamp(0.0, 1.0);
 
     return Column(
@@ -1058,9 +1066,9 @@ class _BarraComparativa extends StatelessWidget {
             Expanded(
               child: Text(
                 titulo,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF334155),
+                  color: cores.onSurface,
                   fontSize: 13,
                 ),
               ),
@@ -1068,9 +1076,9 @@ class _BarraComparativa extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               formatarMoeda(valor),
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF172033),
+                color: cores.onSurface,
                 fontSize: 13,
               ),
             ),
@@ -1082,7 +1090,7 @@ class _BarraComparativa extends StatelessWidget {
           child: Container(
             height: 11,
             width: double.infinity,
-            color: const Color(0xFFF1F5F9),
+            color: cores.surfaceContainerHighest,
             alignment: Alignment.centerLeft,
             child: FractionallySizedBox(
               widthFactor: proporcao,
@@ -1105,42 +1113,44 @@ class _EstadoVazioContas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 30),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cores.surfaceContainerLow,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EDF4)),
+        border: Border.all(color: cores.outlineVariant),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(15),
-            decoration: const BoxDecoration(
-              color: Color(0xFFEFF6FF),
+            decoration: BoxDecoration(
+              color: cores.primaryContainer,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.receipt_long_outlined,
               size: 30,
-              color: Color(0xFF2563EB),
+              color: cores.onPrimaryContainer,
             ),
           ),
           const SizedBox(height: 14),
-          const Text(
+          Text(
             'Nenhuma conta neste mês',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
-              color: Color(0xFF172033),
+              color: cores.onSurface,
             ),
           ),
           const SizedBox(height: 5),
           Text(
             'Não existem contas com vencimento neste período.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+            style: TextStyle(color: cores.onSurfaceVariant, fontSize: 13),
           ),
         ],
       ),
@@ -1171,14 +1181,16 @@ class _ItemContaMensal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cores.surfaceContainerLow,
         borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: const Color(0xFFE8EDF4)),
+        border: Border.all(color: cores.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1188,10 +1200,10 @@ class _ItemContaMensal extends StatelessWidget {
               Expanded(
                 child: Text(
                   nome,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF172033),
+                    color: cores.onSurface,
                   ),
                 ),
               ),
@@ -1202,7 +1214,7 @@ class _ItemContaMensal extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: corStatus.withValues(alpha: 0.10),
+                  color: corStatus.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -1216,30 +1228,28 @@ class _ItemContaMensal extends StatelessWidget {
               ),
             ],
           ),
-
-          // Identificação visual de conta recorrente.
           if (recorrente) ...[
             const SizedBox(height: 9),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F0FE),
+                color: cores.primaryContainer,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFD7E3F8)),
+                border: Border.all(color: cores.outlineVariant),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     Icons.repeat_rounded,
                     size: 13,
-                    color: Color(0xFF2563EB),
+                    color: cores.onPrimaryContainer,
                   ),
-                  SizedBox(width: 5),
+                  const SizedBox(width: 5),
                   Text(
                     'Recorrente',
                     style: TextStyle(
-                      color: Color(0xFF2563EB),
+                      color: cores.onPrimaryContainer,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1248,31 +1258,37 @@ class _ItemContaMensal extends StatelessWidget {
               ),
             ),
           ],
-
           const SizedBox(height: 9),
           Row(
             children: [
               Icon(
                 Icons.calendar_today_outlined,
                 size: 14,
-                color: Colors.grey.shade600,
+                color: cores.onSurfaceVariant,
               ),
               const SizedBox(width: 6),
               Text(
                 'Vencimento: $vencimento',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                style: TextStyle(
+                  color: cores.onSurfaceVariant,
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 13),
-            child: Divider(height: 1, color: Colors.grey.shade200),
+            child: Divider(height: 1, color: cores.outlineVariant),
           ),
           _LinhaConta(titulo: 'Valor total', valor: total),
           const SizedBox(height: 9),
           _LinhaConta(titulo: 'Valor pago', valor: pago),
           const SizedBox(height: 9),
-          _LinhaConta(titulo: 'Saldo restante', valor: saldo, destaque: true),
+          _LinhaConta(
+            titulo: 'Saldo restante',
+            valor: saldo,
+            destaque: true,
+          ),
         ],
       ),
     );
@@ -1292,13 +1308,15 @@ class _LinhaConta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = Theme.of(context).colorScheme;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           titulo,
           style: TextStyle(
-            color: destaque ? const Color(0xFF334155) : Colors.grey.shade600,
+            color: destaque ? cores.onSurface : cores.onSurfaceVariant,
             fontSize: 13,
             fontWeight: destaque ? FontWeight.w600 : FontWeight.normal,
           ),
@@ -1308,7 +1326,7 @@ class _LinhaConta extends StatelessWidget {
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 13,
-            color: destaque ? const Color(0xFF2563EB) : const Color(0xFF172033),
+            color: destaque ? cores.primary : cores.onSurface,
           ),
         ),
       ],
