@@ -11,10 +11,12 @@ void main() {
 
 class DomusApp extends StatefulWidget {
   final Future<int> Function()? gerarRecorrencias;
+  final Future<void> Function()? carregarTema;
 
   const DomusApp({
     super.key,
     this.gerarRecorrencias,
+    this.carregarTema,
   });
 
   @override
@@ -29,9 +31,14 @@ class _DomusAppState extends State<DomusApp> {
         RecorrenciasGerador().gerarContas();
   }
 
+  Future<void> _carregarTema() {
+    return widget.carregarTema?.call() ??
+        temaController.carregar();
+  }
+
   Future<int> _inicializar() async {
     try {
-      await temaController.carregar();
+      await _carregarTema();
     } catch (e) {
       debugPrint('Erro ao carregar preferência de tema: $e');
     }
@@ -59,7 +66,6 @@ class _DomusAppState extends State<DomusApp> {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'Domus',
-
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
               seedColor: Colors.blue,
@@ -67,7 +73,6 @@ class _DomusAppState extends State<DomusApp> {
             ),
             useMaterial3: true,
           ),
-
           darkTheme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
               seedColor: Colors.blue,
@@ -75,9 +80,7 @@ class _DomusAppState extends State<DomusApp> {
             ),
             useMaterial3: true,
           ),
-
           themeMode: temaController.themeMode,
-
           home: FutureBuilder<int>(
             future: _inicializacao,
             builder: (context, snapshot) {

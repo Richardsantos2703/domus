@@ -157,9 +157,9 @@ class _TelaContasState extends State<TelaContas> {
           valor: formatarMoeda(conta['valor_total_centavos']),
           vencimento: formatarData(conta['data_vencimento'] as String),
           status: nomeStatus(conta['status'] as String?),
-          recorrencia: conta['recorrencia_id'] == null
-              ? 'Não se repete'
-              : 'Recorrente',
+          recorrencia: conta['recorrencia_ativa'] == 1
+              ? 'Recorrente'
+              : 'Não se repete',
         ),
       ),
     );
@@ -278,7 +278,7 @@ class _TelaContasState extends State<TelaContas> {
     final vencimento = conta['data_vencimento'] as String;
     final descricao = (conta['descricao'] as String?)?.trim() ?? '';
 
-    final recorrente = conta['recorrencia_id'] != null;
+    final recorrente = conta['recorrencia_ativa'] == 1;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),

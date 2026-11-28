@@ -1,3 +1,4 @@
+
 import 'package:domus/database/database_helper.dart';
 
 class ContaComPagamentosException implements Exception {
@@ -22,6 +23,7 @@ class ContasRepository {
       c.*,
       cat.nome AS categoria_nome,
       cat.cor AS categoria_cor,
+      r.ativa AS recorrencia_ativa,
 
       COALESCE(SUM(p.valor_pago_centavos), 0)
         AS valor_pago_centavos,
@@ -48,6 +50,9 @@ class ContasRepository {
 
     INNER JOIN categorias cat
       ON cat.id = c.categoria_id
+
+    LEFT JOIN recorrencias r
+      ON r.id = c.recorrencia_id
 
     LEFT JOIN pagamentos p
       ON p.conta_id = c.id
@@ -262,7 +267,12 @@ class ContasRepository {
   Future<int> atualizar(int id, Map<String, Object?> dados) async {
     final db = await DatabaseHelper.instance.database;
 
-    return await db.update('contas', dados, where: 'id = ?', whereArgs: [id]);
+    return await db.update(
+      'contas',
+      dados,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   // Exclui uma conta respeitando as regras de pagamentos e recorrências.
@@ -296,7 +306,8 @@ class ContasRepository {
         throw ContaComPagamentosException();
       }
 
-      final recorrenciaId = contasEncontradas.first['recorrencia_id'] as int?;
+      final recorrenciaId =
+          contasEncontradas.first['recorrencia_id'] as int?;
 
       if (recorrenciaId != null) {
         // Verifica se a recorrência está ativa.
@@ -323,7 +334,8 @@ class ContasRepository {
               [recorrenciaId],
             );
 
-            final quantidade = (resultado.first['total'] as num).toInt();
+            final quantidade =
+                (resultado.first['total'] as num).toInt();
 
             // Não permite excluir a última conta da recorrência ativa.
             if (quantidade <= 1) {
@@ -333,7 +345,11 @@ class ContasRepository {
         }
       }
 
-      return await txn.delete('contas', where: 'id = ?', whereArgs: [id]);
+      return await txn.delete(
+        'contas',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
     });
   }
 }

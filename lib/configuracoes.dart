@@ -1,4 +1,4 @@
-
+﻿
 import 'package:flutter/material.dart';
 
 import 'tema_controller.dart';
@@ -169,7 +169,7 @@ class TelaConfiguracoes extends StatelessWidget {
                     const ListTile(
                       leading: Icon(Icons.code),
                       title: Text('Versão'),
-                      subtitle: Text('Em desenvolvimento'),
+                      subtitle: Text('1.0.0'),
                     ),
                   ],
                 ),
@@ -190,3 +190,4 @@ class TelaConfiguracoes extends StatelessWidget {
     );
   }
 }
+

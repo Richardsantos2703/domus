@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'database/contas_repository.dart';
 import 'database/database_helper.dart';
+import 'database/recorrencias_repository.dart';
 
 class TelaEditarConta extends StatefulWidget {
   final int contaId;
@@ -15,6 +16,8 @@ class TelaEditarConta extends StatefulWidget {
 
 class _TelaEditarContaState extends State<TelaEditarConta> {
   final ContasRepository _repository = ContasRepository();
+  final RecorrenciasRepository _recorrenciasRepository =
+      RecorrenciasRepository();
 
   final _formKey = GlobalKey<FormState>();
 
@@ -25,6 +28,12 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
   DateTime? _vencimento;
   int? _categoriaId;
   int _valorPagoCentavos = 0;
+
+  int? _recorrenciaId;
+  bool _recorrenciaAtiva = false;
+  bool _recorrenciaAtivaOriginal = false;
+  String? _frequenciaRecorrencia;
+  String? _frequenciaRecorrenciaOriginal;
 
   List<Map<String, Object?>> _categorias = [];
 
@@ -64,6 +73,16 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
         throw Exception('Conta não encontrada.');
       }
 
+      final recorrenciaId =
+          (resultado['recorrencia_id'] as num?)?.toInt();
+
+      final recorrencia = recorrenciaId == null
+          ? null
+          : await _recorrenciasRepository.buscarPorId(recorrenciaId);
+
+      final recorrenciaAtiva =
+          (recorrencia?['ativa'] as num?)?.toInt() == 1;
+
       final partes = (resultado['data_vencimento'] as String).split('-');
 
       if (partes.length != 3) {
@@ -91,6 +110,14 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
           int.parse(partes[1]),
           int.parse(partes[2]),
         );
+
+        _recorrenciaId = recorrencia == null ? null : recorrenciaId;
+        _recorrenciaAtiva = recorrenciaAtiva;
+        _recorrenciaAtivaOriginal = recorrenciaAtiva;
+
+        _frequenciaRecorrencia =
+            recorrencia?['frequencia'] as String?;
+        _frequenciaRecorrenciaOriginal = _frequenciaRecorrencia;
 
         _carregando = false;
       });
@@ -218,6 +245,32 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
             ? null
             : _descricaoController.text.trim(),
       });
+
+      if (_recorrenciaId != null) {
+        if (_frequenciaRecorrencia != _frequenciaRecorrenciaOriginal) {
+          if (_frequenciaRecorrencia == null) {
+            throw Exception('Selecione uma frequência válida.');
+          }
+
+          await _recorrenciasRepository.atualizar(
+            _recorrenciaId!,
+            {
+              'frequencia': _frequenciaRecorrencia,
+              'mes_vencimento': _frequenciaRecorrencia == 'anual'
+                  ? _vencimento!.month
+                  : null,
+            },
+          );
+        }
+
+        if (_recorrenciaAtiva != _recorrenciaAtivaOriginal) {
+          if (_recorrenciaAtiva) {
+            await _recorrenciasRepository.ativar(_recorrenciaId!);
+          } else {
+            await _recorrenciasRepository.desativar(_recorrenciaId!);
+          }
+        }
+      }
 
       if (!mounted) return;
 
@@ -437,6 +490,86 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
     );
   }
 
+  Widget _construirSecaoRecorrencia() {
+    if (_recorrenciaId == null) {
+      return const SizedBox.shrink();
+    }
+
+    final frequencia = _frequenciaRecorrencia == 'mensal'
+        ? 'Mensal'
+        : 'Anual';
+
+    return _construirSecao(
+      icone: Icons.repeat,
+      titulo: 'Recorrência',
+      subtitulo: 'Controle a geração automática de novas contas',
+      children: [
+        DropdownButtonFormField<String>(
+          initialValue: _frequenciaRecorrencia,
+          isExpanded: true,
+          decoration: _decoracaoCampo(
+            label: 'Frequência',
+            prefixIcon: Icon(
+              Icons.calendar_month_outlined,
+              color: _cores.onSurfaceVariant,
+            ),
+          ),
+          items: const [
+            DropdownMenuItem<String>(
+              value: 'mensal',
+              child: Text('Mensal'),
+            ),
+            DropdownMenuItem<String>(
+              value: 'anual',
+              child: Text('Anual'),
+            ),
+          ],
+          onChanged: _salvando
+              ? null
+              : (value) {
+                  if (value == null) return;
+
+                  setState(() {
+                    _frequenciaRecorrencia = value;
+                  });
+                },
+        ),
+        const SizedBox(height: 12),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text(
+            'Gerar novas contas automaticamente',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+          subtitle: Text(
+            _recorrenciaAtiva
+                ? 'Ativada ($frequencia). Novas contas serão geradas conforme a frequência.'
+                : 'Desativada. Nenhuma nova conta será gerada.',
+          ),
+          value: _recorrenciaAtiva,
+          onChanged: _salvando
+              ? null
+              : (value) {
+                  setState(() {
+                    _recorrenciaAtiva = value;
+                  });
+                },
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Desativar a recorrência não apaga contas já geradas nem '
+          'seus pagamentos. Você poderá excluir contas normalmente, '
+          'respeitando as regras de pagamentos registrados.',
+          style: TextStyle(
+            color: _cores.onSurfaceVariant,
+            fontSize: 12,
+            height: 1.5,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _construirTelaErro() {
     return Scaffold(
       backgroundColor: _cores.surface,
@@ -621,6 +754,10 @@ class _TelaEditarContaState extends State<TelaEditarConta> {
                 _construirCampoData(),
               ],
             ),
+            if (_recorrenciaId != null) ...[
+              const SizedBox(height: 16),
+              _construirSecaoRecorrencia(),
+            ],
             const SizedBox(height: 16),
             _construirSecao(
               icone: Icons.notes_outlined,

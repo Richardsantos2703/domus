@@ -897,7 +897,10 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
     final descricao = conta!['descricao'] as String? ?? '';
     final nomeConta = conta!['nome'] as String? ?? 'Conta';
     final dataVencimento = conta!['data_vencimento'] as String?;
-    final recorrente = conta!['recorrencia_id'] != null;
+
+    // Consulta o estado real da recorrência no banco de dados.
+    final recorrente =
+        (conta!['recorrencia_ativa'] as num?)?.toInt() == 1;
 
     final valorPagoCentavos = (valorPago as num?)?.toInt() ?? 0;
     final saldoCentavos = (saldo as num?)?.toInt() ?? 0;
@@ -954,7 +957,7 @@ class _TelaDetalhesContaState extends State<TelaDetalhesConta> {
                   construirInformacao(
                     icone: Icons.repeat_rounded,
                     titulo: 'Recorrência',
-                    valor: widget.recorrencia,
+                    valor: recorrente ? 'Recorrente' : 'Não se repete',
                   ),
                   if (descricao.isNotEmpty) ...[
                     Divider(height: 1, color: cores.outlineVariant),

@@ -298,7 +298,8 @@ class _TelaResumoMensalState extends State<TelaResumoMensal> {
                           status,
                           Theme.of(context).brightness,
                         ),
-                        recorrente: conta['recorrencia_id'] != null,
+                        recorrente:
+                            (conta['recorrencia_ativa'] as num?)?.toInt() == 1,
                       );
                     }),
                     if (dados.contas.length > 3) ...[

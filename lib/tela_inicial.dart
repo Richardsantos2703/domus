@@ -5,6 +5,7 @@ import 'configuracoes.dart';
 import 'database/contas_repository.dart';
 import 'contas.dart';
 import 'adicionar_conta.dart';
+import 'detalhes_conta.dart';
 import 'resumo_mensal.dart';
 
 class TelaInicial extends StatefulWidget {
@@ -51,7 +52,6 @@ class _TelaInicialState extends State<TelaInicial> {
       return dataA.compareTo(dataB);
     });
 
-    // Indicadores gerais: consideram todas as contas cadastradas.
     final quantidadePendentes = contas.where((conta) {
       return conta['status'] == 'pendente';
     }).length;
@@ -98,6 +98,57 @@ class _TelaInicialState extends State<TelaInicial> {
     }
 
     return '${partes[2]}/${partes[1]}';
+  }
+
+  String _formatarDataCompleta(String data) {
+    final partes = data.split('-');
+
+    if (partes.length != 3) {
+      return data;
+    }
+
+    return '${partes[2]}/${partes[1]}/${partes[0]}';
+  }
+
+  String _nomeStatus(String? status) {
+    switch (status) {
+      case 'paga':
+        return 'Paga';
+      case 'atrasada':
+        return 'Atrasada';
+      case 'parcial':
+        return 'Pagamento parcial';
+      default:
+        return 'Pendente';
+    }
+  }
+
+  Future<void> _abrirDetalhes(Map<String, Object?> conta) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TelaDetalhesConta(
+          contaId: (conta['id'] as num).toInt(),
+          nome: conta['nome'] as String,
+          valor: _formatarMoeda(
+            (conta['valor_total_centavos'] as num).toInt(),
+          ),
+          vencimento: _formatarDataCompleta(
+            conta['data_vencimento'] as String,
+          ),
+          status: _nomeStatus(conta['status'] as String?),
+          recorrencia: conta['recorrencia_ativa'] == 1
+              ? 'Recorrente'
+              : 'Não se repete',
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _dadosFuture = _carregarDados();
+    });
   }
 
   Future<void> _abrirTela(Widget tela) async {
@@ -351,7 +402,7 @@ class _TelaInicialState extends State<TelaInicial> {
                     titulo: 'Próximas contas',
                     subtitulo: dados.proximasContas.isEmpty
                         ? 'Tudo em dia por enquanto'
-                        : 'Contas que precisam da sua atenção',
+                        : 'Toque em uma conta para ver os detalhes',
                   ),
 
                   const SizedBox(height: 14),
@@ -438,7 +489,8 @@ class _TelaInicialState extends State<TelaInicial> {
                         ),
                         parcial: conta['status'] == 'parcial',
                         atrasada: conta['status'] == 'atrasada',
-                        recorrente: conta['recorrencia_id'] != null,
+                        recorrente: conta['recorrencia_ativa'] == 1,
+                        aoPressionar: () => _abrirDetalhes(conta),
                       );
                     }),
 
@@ -730,6 +782,7 @@ class _Conta extends StatelessWidget {
   final bool parcial;
   final bool atrasada;
   final bool recorrente;
+  final VoidCallback aoPressionar;
 
   const _Conta({
     required this.nome,
@@ -739,6 +792,7 @@ class _Conta extends StatelessWidget {
     required this.parcial,
     required this.atrasada,
     required this.recorrente,
+    required this.aoPressionar,
   });
 
   @override
@@ -765,132 +819,148 @@ class _Conta extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+      child: Material(
         color: cores.surfaceContainer,
         borderRadius: BorderRadius.circular(17),
-        border: Border.all(
-          color: atrasada
-              ? cores.error.withValues(alpha: 0.35)
-              : cores.outlineVariant,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 43,
-            height: 43,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: aoPressionar,
+          borderRadius: BorderRadius.circular(17),
+          child: Container(
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: corStatus.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(13),
+              borderRadius: BorderRadius.circular(17),
+              border: Border.all(
+                color: atrasada
+                    ? cores.error.withValues(alpha: 0.35)
+                    : cores.outlineVariant,
+              ),
             ),
-            child: Icon(iconeStatus, color: corStatus, size: 21),
-          ),
-          const SizedBox(width: 13),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  nome,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: cores.onSurface,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
+                Container(
+                  width: 43,
+                  height: 43,
+                  decoration: BoxDecoration(
+                    color: corStatus.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(13),
                   ),
+                  child: Icon(iconeStatus, color: corStatus, size: 21),
                 ),
-                if (recorrente) ...[
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: cores.primaryContainer,
-                      border: Border.all(
-                        color: cores.primary.withValues(alpha: 0.25),
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.repeat_rounded,
-                          color: cores.onPrimaryContainer,
-                          size: 13,
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        nome,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: cores.onSurface,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Recorrente',
-                          style: TextStyle(
-                            color: cores.onPrimaryContainer,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                      ),
+                      if (recorrente) ...[
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: cores.primaryContainer,
+                            border: Border.all(
+                              color: cores.primary.withValues(alpha: 0.25),
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.repeat_rounded,
+                                color: cores.onPrimaryContainer,
+                                size: 13,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Recorrente',
+                                style: TextStyle(
+                                  color: cores.onPrimaryContainer,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                ],
-                if (descricao.isNotEmpty) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    descricao,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: cores.onSurfaceVariant,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 6),
-                Text(
-                  textoStatus,
-                  style: TextStyle(
-                    color: corStatus,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                      if (descricao.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          descricao,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: cores.onSurfaceVariant,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 6),
+                      Text(
+                        textoStatus,
+                        style: TextStyle(
+                          color: corStatus,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        'Saldo: $valor',
+                        style: TextStyle(
+                          color: cores.onSurfaceVariant,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 5),
-                Text(
-                  'Saldo: $valor',
-                  style: TextStyle(
-                    color: cores.onSurfaceVariant,
-                    fontSize: 13,
-                  ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Vencimento',
+                      style: TextStyle(
+                        color: cores.onSurfaceVariant,
+                        fontSize: 10,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      vencimento,
+                      style: TextStyle(
+                        color: atrasada ? cores.error : cores.onSurface,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Icon(
+                      Icons.chevron_right,
+                      size: 20,
+                      color: cores.onSurfaceVariant,
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                'Vencimento',
-                style: TextStyle(
-                  color: cores.onSurfaceVariant,
-                  fontSize: 10,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                vencimento,
-                style: TextStyle(
-                  color: atrasada ? cores.error : cores.onSurface,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

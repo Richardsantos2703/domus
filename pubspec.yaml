@@ -1,6 +1,6 @@
-
+﻿
 name: domus
-description: "A new Flutter project."
+description: "Aplicativo de gerenciamento de contas domésticas com armazenamento local em SQLite."
 publish_to: 'none'
 
 version: 1.0.0+1
